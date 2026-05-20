@@ -29,7 +29,8 @@ import {
   Timer,
   Heart,
   UserRound,
-  Compass
+  Compass,
+  Gem
 } from 'lucide-react';
 import { View, Gender, UserProfile } from '../types';
 
@@ -51,15 +52,21 @@ export function TopAppBar({ view, onNavigate, title = 'Opala Negra', showBack, o
     <header className="fixed top-0 left-0 right-0 z-50 flex justify-center">
       <div className="w-full max-w-lg bg-white/80 backdrop-blur-lg border-b border-brand-primary/5 flex justify-between items-center px-5 h-16 transition-all">
         <div className="flex items-center gap-3">
-          {showBack && (
+          {showBack ? (
             <button onClick={onBack} className="p-2 -ml-2 hover:bg-brand-highlight rounded-full transition-all active:scale-90">
               <ArrowLeft className="w-6 h-6 text-brand-primary" />
             </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-brand-primary flex items-center justify-center shadow-lg shadow-brand-primary/20">
+                <Gem className="w-4 h-4 text-brand-mango" />
+              </div>
+              <span className="text-[12px] font-black tracking-tighter text-brand-primary uppercase">Opala <span className="text-brand-mango">Negra</span></span>
+            </div>
           )}
         </div>
         
         <div className="flex items-center gap-4">
-          <span className="text-[10px] font-black tracking-[0.3em] text-brand-primary/40 uppercase mr-1">Opala Negra</span>
           {view === 'messages' && (
             <button onClick={() => onNavigate('transactions')} className="p-2 hover:bg-brand-highlight rounded-full text-brand-primary/40 transition-colors">
               <History className="w-5 h-5" />

@@ -9,7 +9,8 @@ import {
   Info,
   CheckCircle2,
   Lock,
-  UserPlus
+  UserPlus,
+  Gem
 } from 'lucide-react';
 
 import { signInWithGoogle } from '../services/firebase';
@@ -73,8 +74,11 @@ export function AccessFlow({ inviteCode, onUpdateInviteCode, onComplete }: Acces
             className="fixed inset-0 z-50 bg-brand-primary flex flex-col items-center justify-center p-12 cursor-pointer"
             onClick={() => setStep('auth')}
           >
-            <div className="absolute top-8 right-8 z-20">
-              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em]">OPALA NEGRA</p>
+            <div className="absolute top-10 right-10 z-20 flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-white/10 backdrop-blur-md flex items-center justify-center">
+                <Gem className="w-3 h-3 text-brand-mango" />
+              </div>
+              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em]">OPALA <span className="text-brand-mango">NEGRA</span></p>
             </div>
             
             <motion.div 
@@ -111,14 +115,15 @@ export function AccessFlow({ inviteCode, onUpdateInviteCode, onComplete }: Acces
             exit={{ opacity: 0, x: -20 }}
             className="w-full max-w-md px-8 pt-24 pb-12 flex flex-col h-full z-10"
           >
-            <div className="absolute top-8 right-8">
-              <p className="text-[10px] font-black text-brand-primary/20 uppercase tracking-[0.4em]">OPALA NEGRA</p>
+            <div className="absolute top-10 right-10 flex items-center gap-2">
+              <Gem className="w-3 h-3 text-brand-mango" />
+              <p className="text-[10px] font-black text-brand-primary/20 uppercase tracking-[0.4em]">OPALA <span className="text-brand-mango">NEGRA</span></p>
             </div>
 
             <h1 className="text-4xl font-black text-brand-primary tracking-tighter mb-4 leading-tight mt-12">
-              Relacionamentos <span className="text-brand-mango">reais</span> começam aqui.
+              Relacionamentos <span className="text-brand-mango">reais</span> e exclusivos.
             </h1>
-            <p className="text-gray-500 font-medium mb-12">Escolha seu método de acesso seguro e verificado.</p>
+            <p className="text-gray-500 font-medium mb-12">Acesse o protocolo de elite ON.</p>
 
             <div className="space-y-4">
               <motion.button 

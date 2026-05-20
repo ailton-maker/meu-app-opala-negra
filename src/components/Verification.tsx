@@ -1,3 +1,4 @@
+import { motion } from 'motion/react';
 import { 
   CheckCircle, 
   ArrowRight, 
@@ -10,35 +11,79 @@ import {
   Verified,
   Video,
   X,
-  MapPin
+  MapPin,
+  Search
 } from 'lucide-react';
 import { useState } from 'react';
 
 import { Gender } from '../types';
 import { MapComponent } from './MapComponent';
 
-const BRAZIL_CITIES = [
-  'São Paulo, SP',
-  'Rio de Janeiro, RJ',
-  'Belo Horizonte, MG',
-  'Curitiba, PR',
-  'Porto Alegre, RS',
-  'Salvador, BA',
-  'Brasília, DF',
-  'Fortaleza, CE'
-];
 
 export function Verification({ onComplete }: { onComplete: (gender: Gender, photos: string[], location: string, video?: string) => void }) {
   const [step, setStep] = useState<'consent' | 'gender' | 'location' | 'photos' | 'video' | 'thumb'>('consent');
   const [agreed, setAgreed] = useState(false);
   const [selectedGender, setSelectedGender] = useState<Gender | null>(null);
-  const [selectedLocation, setSelectedLocation] = useState<string>('São Paulo, SP');
+  const [selectedLocation, setSelectedLocation] = useState<string>('');
+  const [cep, setCep] = useState('');
+  const [isVerifyingCep, setIsVerifyingCep] = useState(false);
+  const [cepError, setCepError] = useState<string | null>(null);
   const [photos, setPhotos] = useState<string[]>([]); 
   const [isUploading, setIsUploading] = useState(false);
   const [recording, setRecording] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | undefined>(undefined);
   const [countdown, setCountdown] = useState(5);
 
+  const handleCepChange = (value: string) => {
+    const cleaned = value.replace(/\D/g, '').slice(0, 8);
+    let formatted = cleaned;
+    if (cleaned.length > 5) {
+      formatted = `${cleaned.slice(0, 5)}-${cleaned.slice(5)}`;
+    }
+    setCep(formatted);
+    setCepError(null);
+
+    if (cleaned.length === 8) {
+      triggerSearch(cleaned);
+    } else {
+      setSelectedLocation('');
+    }
+  };
+
+  const triggerSearch = async (code: string) => {
+    const cleaned = code.replace(/\D/g, '');
+    if (cleaned.length !== 8) return;
+
+    setIsVerifyingCep(true);
+    setCepError(null);
+    
+    try {
+      // Use a slightly longer timeout or different approach if fetch fails
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+      const response = await fetch(`https://viacep.com.br/ws/${cleaned}/json/`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) throw new Error('Network response was not ok');
+      
+      const data = await response.json();
+      
+      if (data.erro) {
+        setCepError('CEP não encontrado em nossa base de dados.');
+        setSelectedLocation('');
+      } else {
+        setSelectedLocation(`${data.localidade}, ${data.uf}`);
+      }
+    } catch (err) {
+      console.error('ViaCEP error:', err);
+      setCepError('Conexão instável. Verifique o CEP e tente novamente.');
+    } finally {
+      setIsVerifyingCep(false);
+    }
+  };
   const startRecording = () => {
     setRecording(true);
     let count = 5;
@@ -132,31 +177,74 @@ export function Verification({ onComplete }: { onComplete: (gender: Gender, phot
         )}
 
         {step === 'location' && (
-          <div className="space-y-8">
-            <div className="bg-white p-8 rounded-[40px] border border-brand-primary/5 shadow-2xl shadow-brand-primary/5 space-y-6">
-              <div className="rounded-3xl overflow-hidden border border-brand-primary/10 shadow-inner mb-6">
-                <MapComponent location={selectedLocation} className="h-48" />
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
+            <div className="bg-white p-8 rounded-[40px] border border-brand-primary/5 shadow-2xl shadow-brand-primary/5 space-y-8">
+              <div className="rounded-3xl overflow-hidden border border-brand-primary/10 shadow-inner group relative">
+                <MapComponent location={selectedLocation || "Brasil"} className="h-48 group-hover:scale-105 transition-transform duration-700" />
+                {!selectedLocation && (
+                  <div className="absolute inset-0 bg-brand-primary/10 backdrop-blur-[2px] flex items-center justify-center p-8 text-center">
+                    <p className="text-[10px] font-black text-brand-primary uppercase tracking-[0.3em]">Aguardando verificação de CEP...</p>
+                  </div>
+                )}
               </div>
-              <div className="space-y-4">
-                {BRAZIL_CITIES.map(city => (
-                  <button
-                    key={city}
-                    onClick={() => setSelectedLocation(city)}
-                    className={`w-full p-4 rounded-2xl border flex items-center justify-between transition-all ${
-                      selectedLocation === city 
-                      ? 'border-brand-mango bg-brand-mango/5 text-brand-mango font-bold shadow-md shadow-brand-mango/5' 
-                      : 'border-gray-100 text-brand-primary/60 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <MapPin className={`w-4 h-4 ${selectedLocation === city ? 'text-brand-mango' : 'text-gray-300'}`} />
-                      <span className="text-sm">{city}</span>
+
+              <div className="space-y-6">
+                <div className="relative">
+                  <div className="flex items-center gap-2 mb-3">
+                    <MapPin className="w-3 h-3 text-brand-mango" />
+                    <label className="text-[10px] font-black text-brand-primary/40 uppercase tracking-widest">Código de Endereçamento Postal (CEP)</label>
+                  </div>
+                  <div className="relative group">
+                    <input 
+                      type="text"
+                      placeholder="00000-000"
+                      value={cep}
+                      onChange={(e) => handleCepChange(e.target.value)}
+                      className={`w-full h-16 px-6 bg-brand-highlight/30 border-2 rounded-2xl font-black text-xl tracking-widest text-brand-primary transition-all focus:outline-none placeholder:text-brand-primary/5 pr-20
+                        ${cepError ? 'border-rose-200 bg-rose-50/30' : selectedLocation ? 'border-brand-mango/20 bg-brand-mango/5' : 'border-transparent focus:border-brand-primary/10'}
+                      `}
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                      {isVerifyingCep ? (
+                        <div className="w-8 h-8 flex items-center justify-center">
+                          <div className="w-4 h-4 border-2 border-brand-mango/20 border-t-brand-mango rounded-full animate-spin" />
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={() => triggerSearch(cep)}
+                          className={`p-2.5 rounded-xl transition-all ${cep.replace(/\D/g,'').length === 8 ? 'bg-brand-mango text-white shadow-lg shadow-brand-mango/20' : 'text-brand-primary/10 bg-transparent'}`}
+                        >
+                          <Search className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
-                    {selectedLocation === city && <CheckCircle className="w-4 h-4" />}
-                  </button>
-                ))}
+                  </div>
+                  {cepError && (
+                    <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="mt-3 text-[10px] font-bold text-rose-500 uppercase tracking-wider">{cepError}</motion.p>
+                  )}
+                </div>
+
+                {selectedLocation && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="p-6 bg-brand-primary text-white rounded-2xl flex items-center justify-between group overflow-hidden relative shadow-xl shadow-brand-primary/20"
+                  >
+                    <div className="relative z-10">
+                      <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em] mb-1">Localização Confirmada</p>
+                      <p className="text-sm font-black tracking-tight">{selectedLocation}</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center relative z-10">
+                      <CheckCircle className="w-5 h-5 text-brand-mango" />
+                    </div>
+                    {/* Interior glow effect */}
+                    <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-brand-mango/20 blur-3xl rounded-full" />
+                  </motion.div>
+                )}
               </div>
+
               <button 
+                disabled={!selectedLocation || isVerifyingCep}
                 onClick={() => {
                   setPhotos(selectedGender === 'male' 
                     ? ["https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&h=400&fit=crop", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=400&fit=crop", "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=300&h=400&fit=crop"]
@@ -164,9 +252,11 @@ export function Verification({ onComplete }: { onComplete: (gender: Gender, phot
                   );
                   setStep('photos');
                 }}
-                className="w-full h-14 bg-brand-primary text-white rounded-xl font-black text-base shadow-xl shadow-brand-primary/20 transition-all active:scale-95"
+                className="w-full h-16 bg-brand-mango text-white rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-brand-mango/20 transition-all active:scale-95 disabled:opacity-20 hover:bg-brand-primary flex items-center justify-center gap-3 relative overflow-hidden group"
               >
-                Confirmar Localização
+                <span className="relative z-10">Validar Protocolo Local</span>
+                <ArrowRight className="w-4 h-4 relative z-10 group-hover:translate-x-1 transition-transform" />
+                <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite] transition-transform" />
               </button>
             </div>
           </div>

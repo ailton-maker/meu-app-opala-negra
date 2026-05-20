@@ -27,6 +27,34 @@ export function MapComponent({ location, zoom = 12, className = "h-64 w-full" }:
   const center: [number, number] = (location && CITY_COORDS[location]) || [-46.6333, -23.5505];
 
   useEffect(() => {
+    const updateLocation = async () => {
+      if (!location) return;
+      
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location + ', Brasil')}&limit=1`);
+        const data = await response.json();
+        
+        if (data && data.length > 0) {
+          const newCenter: [number, number] = [parseFloat(data[0].lon), parseFloat(data[0].lat)];
+          
+          if (map.current) {
+            map.current.flyTo({ center: newCenter, zoom: zoom, speed: 0.8 });
+            if (marker.current) {
+              marker.current.setLngLat(newCenter);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Geocoding error:', err);
+      }
+    };
+
+    if (map.current) {
+      updateLocation();
+    }
+  }, [location, zoom]);
+
+  useEffect(() => {
     if (!mapContainer.current) return;
     
     if (!map.current) {
@@ -41,19 +69,10 @@ export function MapComponent({ location, zoom = 12, className = "h-64 w-full" }:
       map.current.addControl(new maplibregl.NavigationControl(), 'top-right');
       map.current.addControl(new maplibregl.AttributionControl({ compact: true }));
 
-      marker.current = new maplibregl.Marker({ color: '#581C87' })
+      marker.current = new maplibregl.Marker({ color: '#FB923C' })
         .setLngLat(center)
         .addTo(map.current);
-    } else {
-      map.current.flyTo({ center, speed: 0.8 });
-      if (marker.current) {
-        marker.current.setLngLat(center);
-      }
     }
-
-    return () => {
-      // Don't remove map on every re-render, only on unmount
-    };
   }, [center, zoom]);
 
   useEffect(() => {

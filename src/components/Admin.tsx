@@ -14,25 +14,47 @@ import {
   CheckCircle,
   XCircle,
   Timer as ClockIcon,
-  Filter
+  Filter,
+  RefreshCw
 } from 'lucide-react';
+import { firebaseDb } from '../services/db';
+import { useState } from 'react';
 
 export function AdminDashboard() {
+  const [seeding, setSeeding] = useState(false);
+
+  const handleReseed = async () => {
+    setSeeding(true);
+    await firebaseDb.seedInitialData();
+    setSeeding(false);
+    alert('Base de dados populada com novos perfis de alta qualidade.');
+  };
+
   return (
     <div className="pt-16 pb-24 px-5 max-w-7xl mx-auto w-full overflow-y-auto">
       <div className="mt-8 mb-12">
         <h2 className="text-4xl font-extrabold text-indigo-950 mb-4 tracking-tighter">Painel de Analytics</h2>
-        <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-5 flex items-center gap-4 shadow-sm">
-          <Shield className="w-6 h-6 text-emerald-600" />
-          <p className="text-sm font-bold text-emerald-800 tracking-tight leading-relaxed">
-            Acesso restrito ao nível Administrativo. Todas as ações nesta página estão sendo registradas nos logs de auditoria para fins de compliance LGPD.
-          </p>
-        </div>
-        <div className="flex justify-end mt-6">
-          <button className="flex items-center gap-2 bg-indigo-950 text-white px-6 py-3 rounded-2xl font-bold text-xs hover:opacity-90 transition-opacity shadow-lg">
-            <Download className="w-4 h-4" /> 
-            EXPORTAR CSV (LGPD)
-          </button>
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+          <div className="flex-grow bg-emerald-50 border border-emerald-100 rounded-2xl p-5 flex items-center gap-4 shadow-sm">
+            <Shield className="w-6 h-6 text-emerald-600" />
+            <p className="text-sm font-bold text-emerald-800 tracking-tight leading-relaxed">
+              Acesso restrito ao nível Administrativo. Ações registradas conforme LGPD.
+            </p>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <button 
+              onClick={handleReseed}
+              disabled={seeding}
+              className="flex items-center gap-2 bg-brand-mango text-white px-6 py-3 rounded-2xl font-bold text-xs hover:opacity-90 transition-opacity shadow-lg disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${seeding ? 'animate-spin' : ''}`} /> 
+              SIMULAR NOVOS USUÁRIOS
+            </button>
+            <button className="flex items-center gap-2 bg-indigo-950 text-white px-6 py-3 rounded-2xl font-bold text-xs hover:opacity-90 transition-opacity shadow-lg">
+              <Download className="w-4 h-4" /> 
+              EXPORTAR CSV
+            </button>
+          </div>
         </div>
       </div>
 
