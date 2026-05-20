@@ -33,7 +33,7 @@ export default function App() {
   const [previousView, setPreviousView] = useState<View>('discovery');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [tempAuth, setTempAuth] = useState<{method: string, value: string} | null>(null);
-  const [tempInviteCode, setTempInviteCode] = useState<string | null>(null);
+  const [tempInviteCode, setTempInviteCode] = useState<string>('');
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -41,6 +41,13 @@ export default function App() {
   useEffect(() => {
     firebaseDb.seedInitialData();
     let unsubscribeProfile: (() => void) | null = null;
+
+    // Check for invite code in URL
+    const params = new URLSearchParams(window.location.search);
+    const codeFromUrl = params.get('code') || params.get('invite');
+    if (codeFromUrl) {
+      setTempInviteCode(codeFromUrl);
+    }
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -51,7 +58,8 @@ export default function App() {
             setUserProfile(profile);
             setCurrentView(prev => prev === 'access' || prev === 'verification' ? 'discovery' : prev);
           } else {
-            setCurrentView('access');
+            // New user authenticated but no profile yet
+            setCurrentView('verification');
           }
           setLoading(false);
         });
@@ -174,11 +182,15 @@ export default function App() {
     <div className="min-h-screen bg-brand-surface flex flex-col font-sans select-none overflow-x-hidden">
       <AnimatePresence mode="wait">
         {currentView === 'access' ? (
-          <AccessFlow onComplete={(authInfo) => {
-            setTempAuth({ method: authInfo.method, value: authInfo.value });
-            if (authInfo.inviteCode) setTempInviteCode(authInfo.inviteCode);
-            navigateTo('verification');
-          }} />
+          <AccessFlow 
+            inviteCode={tempInviteCode}
+            onUpdateInviteCode={setTempInviteCode}
+            onComplete={(authInfo) => {
+              setTempAuth({ method: authInfo.method, value: authInfo.value });
+              if (authInfo.inviteCode) setTempInviteCode(authInfo.inviteCode);
+              navigateTo('verification');
+            }} 
+          />
         ) : currentView === 'verification' ? (
           <Verification onComplete={async (gender, photos, location, video?) => {
             const userId = auth.currentUser?.uid || `user_${Date.now()}`;

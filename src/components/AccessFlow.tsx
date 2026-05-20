@@ -15,14 +15,15 @@ import {
 import { signInWithGoogle } from '../services/firebase';
 
 interface AccessFlowProps {
+  inviteCode: string;
+  onUpdateInviteCode: (code: string) => void;
   onComplete: (authInfo: { method: string; value: string; inviteCode?: string }) => void;
 }
 
-export function AccessFlow({ onComplete }: AccessFlowProps) {
+export function AccessFlow({ inviteCode, onUpdateInviteCode, onComplete }: AccessFlowProps) {
   const [step, setStep] = useState<'splash' | 'auth' | 'input' | 'ethics'>('splash');
   const [method, setMethod] = useState<'email' | 'phone' | null>(null);
   const [value, setValue] = useState('');
-  const [inviteCode, setInviteCode] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleGoogleAuth = async () => {
@@ -41,14 +42,14 @@ export function AccessFlow({ onComplete }: AccessFlowProps) {
     if (step === 'splash') {
       const timer = setTimeout(() => {
         setStep('auth');
-      }, 2500);
+      }, 1800); // 1.8s is slightly faster
       return () => clearTimeout(timer);
     }
   }, [step]);
 
   const handleNext = () => {
     if (step === 'auth') {
-      setStep('auth'); // Already handled by selection
+      setStep('auth'); 
     } else if (step === 'input') {
       if (value) setStep('ethics');
     } else if (step === 'ethics') {
@@ -68,9 +69,9 @@ export function AccessFlow({ onComplete }: AccessFlowProps) {
             key="splash"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 1.1, filter: 'blur(20px)' }}
-            transition={{ duration: 0.8 }}
-            className="fixed inset-0 z-50 bg-brand-primary flex flex-col items-center justify-center p-12"
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-brand-primary flex flex-col items-center justify-center p-12 cursor-pointer"
+            onClick={() => setStep('auth')}
           >
             <div className="absolute top-8 right-8 z-20">
               <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em]">OPALA NEGRA</p>
@@ -80,14 +81,14 @@ export function AccessFlow({ onComplete }: AccessFlowProps) {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ 
-                duration: 1.2, 
+                duration: 0.8, 
                 type: "spring",
                 stiffness: 100,
                 damping: 20
               }}
               className="mt-16 text-center z-10"
             >
-              <div className="flex justify-center gap-2">
+              <div className="flex justify-center gap-2 mb-8">
                 {[0, 1, 2].map(i => (
                   <motion.div 
                     key={i}
@@ -97,6 +98,7 @@ export function AccessFlow({ onComplete }: AccessFlowProps) {
                   />
                 ))}
               </div>
+              <p className="text-white/20 text-[8px] font-black uppercase tracking-[0.5em] animate-pulse">Toque para entrar</p>
             </motion.div>
           </motion.div>
         )}
@@ -131,7 +133,7 @@ export function AccessFlow({ onComplete }: AccessFlowProps) {
                 </div>
                 <div>
                   <span className="block font-bold text-sm tracking-tight">Continuar com Conta Google</span>
-                  <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em]">Criptografia de Ponta</span>
+                  <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em]">Acesso Seguro</span>
                 </div>
                 {loading ? (
                   <div className="w-4 h-4 ml-auto border-2 border-white/20 border-t-white rounded-full animate-spin" />
@@ -139,46 +141,54 @@ export function AccessFlow({ onComplete }: AccessFlowProps) {
                   <ArrowRight className="w-4 h-4 ml-auto text-white/20 group-hover:translate-x-1 transition-all" />
                 )}
               </motion.button>
+              
+              <div className="bg-brand-mango/5 border border-brand-mango/20 p-5 rounded-3xl space-y-3">
+                <div className="flex items-center gap-2">
+                  <UserPlus className="w-4 h-4 text-brand-mango" />
+                  <span className="text-[10px] font-black text-brand-mango uppercase tracking-widest">Tem um convite?</span>
+                </div>
+                <input 
+                  type="text"
+                  placeholder="ON-XXXX-000"
+                  value={inviteCode}
+                  onChange={(e) => onUpdateInviteCode(e.target.value.toUpperCase())}
+                  className="w-full p-4 bg-white border border-brand-mango/10 rounded-2xl font-black text-xs text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-mango/20 transition-all placeholder:text-brand-primary/10"
+                />
+              </div>
 
               <div className="relative py-4">
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-brand-primary/5"></div></div>
-                <div className="relative flex justify-center text-[10px]"><span className="bg-brand-surface px-4 text-brand-primary/20 font-black uppercase tracking-widest">Ou utilize</span></div>
+                <div className="relative flex justify-center text-[10px]"><span className="bg-brand-surface px-4 text-brand-primary/20 font-black uppercase tracking-widest">Outras Opções</span></div>
               </div>
 
-              <motion.button 
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => { setMethod('email'); setStep('input'); }}
-                className="w-full group flex items-center gap-4 p-4 bg-white/70 backdrop-blur-md border border-brand-mango/10 rounded-2xl hover:border-brand-mango/30 hover:shadow-xl hover:shadow-brand-mango/5 transition-all text-left"
-              >
-                <div className="w-12 h-12 rounded-xl bg-brand-mango/10 flex items-center justify-center text-brand-mango group-hover:bg-brand-mango group-hover:text-white transition-all duration-300">
-                  <Mail className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="block text-brand-primary font-bold text-sm tracking-tight">Continuar com E-mail</span>
-                  <span className="text-[9px] font-black text-brand-mango/60 uppercase tracking-[0.2em]">Criptografia de Ponta</span>
-                </div>
-                <ArrowRight className="w-4 h-4 ml-auto text-brand-primary/10 group-hover:text-brand-mango group-hover:translate-x-1 transition-all" />
-              </motion.button>
+              <div className="grid grid-cols-2 gap-4">
+                <motion.button 
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => { setMethod('email'); setStep('input'); }}
+                  className="group flex flex-col items-center gap-3 p-6 bg-white/70 backdrop-blur-md border border-brand-primary/5 rounded-[32px] hover:border-brand-mango/30 hover:shadow-xl hover:shadow-brand-mango/5 transition-all text-center"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-brand-mango/10 flex items-center justify-center text-brand-mango group-hover:bg-brand-mango group-hover:text-white transition-all duration-300">
+                    <Mail className="w-5 h-5" />
+                  </div>
+                  <span className="text-brand-primary font-bold text-[10px] uppercase tracking-widest">E-mail</span>
+                </motion.button>
 
-              <motion.button 
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => { setMethod('phone'); setStep('input'); }}
-                className="w-full group flex items-center gap-4 p-4 bg-white/70 backdrop-blur-md border border-brand-mango/10 rounded-2xl hover:border-brand-mango/30 hover:shadow-xl hover:shadow-brand-mango/5 transition-all text-left"
-              >
-                <div className="w-12 h-12 rounded-xl bg-brand-mango/10 flex items-center justify-center text-brand-mango group-hover:bg-brand-mango group-hover:text-white transition-all duration-300">
-                  <Phone className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="block text-brand-primary font-bold text-sm tracking-tight">Continuar com Telefone</span>
-                  <span className="text-[9px] font-black text-brand-mango/60 uppercase tracking-[0.2em]">SMS Verificado</span>
-                </div>
-                <ArrowRight className="w-4 h-4 ml-auto text-brand-primary/10 group-hover:text-brand-mango group-hover:translate-x-1 transition-all" />
-              </motion.button>
+                <motion.button 
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => { setMethod('phone'); setStep('input'); }}
+                  className="group flex flex-col items-center gap-3 p-6 bg-white/70 backdrop-blur-md border border-brand-primary/5 rounded-[32px] hover:border-brand-mango/30 hover:shadow-xl hover:shadow-brand-mango/5 transition-all text-center"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-brand-mango/10 flex items-center justify-center text-brand-mango group-hover:bg-brand-mango group-hover:text-white transition-all duration-300">
+                    <Phone className="w-5 h-5" />
+                  </div>
+                  <span className="text-brand-primary font-bold text-[10px] uppercase tracking-widest">Telefone</span>
+                </motion.button>
+              </div>
             </div>
 
-            <div className="mt-auto pt-16 flex items-start gap-4 p-6 bg-white/40 backdrop-blur-md rounded-[32px] border border-white shadow-sm">
+            <div className="mt-8 flex items-start gap-4 p-6 bg-white/40 backdrop-blur-md rounded-[32px] border border-white shadow-sm">
               <Lock className="w-5 h-5 text-brand-mango mt-1 shrink-0" />
               <p className="text-[11px] font-bold text-brand-primary/40 leading-relaxed">
                 Utilizamos biometria avançada para garantir relacionamentos reais. Ao entrar, você concorda com nossos <span className="text-brand-mango underline">Protocolos Éticos</span>.
@@ -244,7 +254,7 @@ export function AccessFlow({ onComplete }: AccessFlowProps) {
                     type="text"
                     placeholder="ON-XXXX-000"
                     value={inviteCode}
-                    onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                    onChange={(e) => onUpdateInviteCode(e.target.value.toUpperCase())}
                     className="w-full p-6 bg-white border border-brand-mango/10 rounded-[32px] font-black text-sm text-brand-primary focus:outline-none focus:ring-4 focus:ring-brand-mango/5 focus:border-brand-mango transition-all placeholder:text-brand-primary/10 shadow-sm"
                   />
                   <div className="absolute right-6 top-1/2 -translate-y-1/2">
