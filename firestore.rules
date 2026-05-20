@@ -1,0 +1,96 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // User Rules
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.keys().hasAll(['id', 'name', 'gender', 'joinedAt']) &&
+               data.id is string &&
+               data.name is string && data.name.size() > 0 && data.name.size() < 50 &&
+               data.gender in ['male', 'female'] &&
+               (data.get('age', 18) is number && data.get('age', 18) >= 18);
+      }
+
+      allow get: if isSignedIn();
+      allow list: if isSignedIn(); // For discovery
+
+      allow create: if isOwner(userId) && isValidUser(incoming()) && incoming().id == userId;
+      allow update: if isOwner(userId) && isValidUser(incoming()) &&
+                    incoming().id == userId &&
+                    incoming().joinedAt == existing().joinedAt;
+    }
+
+    // Interaction Rules (Likes/Passes)
+    match /interactions/{interactionId} {
+      function isValidInteraction(data) {
+        return data.keys().hasAll(['fromUserId', 'toUserId', 'type', 'createdAt']) &&
+               data.fromUserId == request.auth.uid &&
+               data.type in ['like', 'pass'];
+      }
+
+      allow read: if isSignedIn() && resource.data.fromUserId == request.auth.uid;
+      allow create: if isSignedIn() && isValidInteraction(incoming());
+    }
+
+    // Conversation Rules
+    match /conversations/{conversationId} {
+      function isParticipant() {
+        return isSignedIn() && (request.auth.uid in existing().participants);
+      }
+
+      function isValidConversation(data) {
+        return data.keys().hasAll(['participants', 'updatedAt']) &&
+               data.participants is list &&
+               (request.auth.uid in data.participants);
+      }
+
+      allow get: if isParticipant();
+      allow list: if isSignedIn() && (request.auth.uid in resource.data.participants);
+      
+      allow create: if isSignedIn() && isValidConversation(incoming());
+      allow update: if isParticipant() && isValidConversation(incoming());
+    }
+
+    // Message Rules
+    match /conversations/{conversationId}/messages/{messageId} {
+      function isConvParticipant() {
+        return isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants);
+      }
+
+      function isValidMessage(data) {
+        return data.keys().hasAll(['senderId', 'text', 'timestamp']) &&
+               data.senderId == request.auth.uid &&
+               data.text is string && data.text.size() > 0 && data.text.size() < 2000;
+      }
+
+      allow read: if isConvParticipant();
+      allow create: if isConvParticipant() && isValidMessage(incoming());
+    }
+  }
+}

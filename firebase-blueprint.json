@@ -1,0 +1,80 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile information and settings",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "age": { "type": "number" },
+        "bio": { "type": "string" },
+        "location": { "type": "string" },
+        "role": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "photos": { "type": "array", "items": { "type": "string" } },
+        "gender": { "type": "string", "enum": ["male", "female"] },
+        "plan": { "type": "string", "enum": ["free", "bronze", "silver", "gold"] },
+        "verificationLevel": { "type": "number" },
+        "reputation": { "type": "number" },
+        "joinedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "gender", "joinedAt"]
+    },
+    "Conversation": {
+      "title": "Conversation",
+      "description": "Chat conversation metadata",
+      "type": "object",
+      "properties": {
+        "participants": { "type": "array", "items": { "type": "string" } },
+        "lastMessageText": { "type": "string" },
+        "lastMessageSenderId": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "unreadCount": { "type": "object" }
+      },
+      "required": ["participants", "updatedAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Individual chat message",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string" },
+        "text": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "status": { "type": "string" }
+      },
+      "required": ["senderId", "text", "timestamp"]
+    },
+    "Interaction": {
+      "title": "Interaction",
+      "description": "Like or Pass interaction",
+      "type": "object",
+      "properties": {
+        "fromUserId": { "type": "string" },
+        "toUserId": { "type": "string" },
+        "type": { "type": "string", "enum": ["like", "pass"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["fromUserId", "toUserId", "type", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Verified user profiles"
+    },
+    "/conversations/{conversationId}": {
+      "schema": "Conversation",
+      "description": "Active chat threads"
+    },
+    "/conversations/{conversationId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Messages in the conversation"
+    },
+    "/interactions/{interactionId}": {
+      "schema": "Interaction",
+      "description": "Likes and passes for discovery filtering"
+    }
+  }
+}

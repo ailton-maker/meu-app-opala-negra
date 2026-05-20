@@ -1,0 +1,12 @@
+{
+  "name": "Opala Negra",
+  "description": "Uma plataforma social exclusiva e segura com foco em conexões autênticas, apresentando verificação de identidade, monitoramento de reputação e mensagens protegidas.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "AI-powered moderation",
+    "Identity Verification",
+    "Secure Payments"
+  ]
+}
