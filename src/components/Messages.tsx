@@ -22,6 +22,7 @@ import {
   Ban
 } from 'lucide-react';
 import { UserProfile, Conversation, Message } from '../types';
+import { AdSpace } from './AdSpace';
 import { firebaseDb } from '../services/db';
 import { auth } from '../services/firebase';
 
@@ -30,6 +31,17 @@ export function ChatView({ conversationId, onBack, userProfile }: { conversation
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isRemoteTyping, setIsRemoteTyping] = useState(false);
+  const [connectionQuality, setConnectionQuality] = useState<'high' | 'medium' | 'low'>('high');
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const rand = Math.random();
+      if (rand > 0.95) setConnectionQuality('low');
+      else if (rand > 0.85) setConnectionQuality('medium');
+      else setConnectionQuality('high');
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (conversationId && userProfile) {
@@ -113,13 +125,30 @@ export function ChatView({ conversationId, onBack, userProfile }: { conversation
               <Verified className="w-3.5 h-3.5 text-brand-mango fill-brand-mango" />
             </div>
             {isRemoteTyping ? (
-              <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest animate-pulse">
-                Digitando...
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest animate-pulse">
+                  Digitando...
+                </p>
+                <div 
+                  className={`w-1.5 h-1.5 rounded-full shadow-[0_0_8px] transition-all duration-1000 ${
+                    connectionQuality === 'high' ? 'bg-emerald-500 shadow-emerald-500/50' : 
+                    connectionQuality === 'medium' ? 'bg-brand-mango shadow-brand-mango/50' : 
+                    'bg-rose-500 shadow-rose-500/50 animate-pulse'
+                  }`}
+                  title={`Conexão: ${connectionQuality === 'high' ? 'Excelente' : connectionQuality === 'medium' ? 'Estável' : 'Instável'}`}
+                />
+              </div>
             ) : (
               <div className="flex items-center gap-1 text-[10px] text-brand-primary/30 font-black uppercase tracking-tight">
                 <Lock className="w-2.5 h-2.5" />
                 Relacionamento Seguro
+                <div 
+                  className={`w-1 h-1 rounded-full ml-1 transition-all duration-1000 ${
+                    connectionQuality === 'high' ? 'bg-emerald-500/20' : 
+                    connectionQuality === 'medium' ? 'bg-brand-mango/20' : 
+                    'bg-rose-500/20'
+                  }`}
+                />
               </div>
             )}
           </div>
@@ -253,6 +282,8 @@ export function Messages({ onOpenChat, userProfile }: { onOpenChat: (id: string)
           <Filter className="w-5 h-5" />
         </button>
       </div>
+
+      <AdSpace variant="inline" userPlan={userProfile?.plan} userId={userProfile?.id} />
 
       <div className="space-y-3">
         {conversations.length === 0 ? (

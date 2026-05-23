@@ -16,18 +16,22 @@ import {
   Settings as SettingsIcon,
   Globe,
   Ghost,
-  LogOut
+  LogOut,
+  Moon
 } from 'lucide-react';
 import { UserProfile } from '../types';
 import { logout } from '../services/firebase';
+import { AdSpace } from './AdSpace';
 import { firebaseDb } from '../services/db';
 
 interface SettingsProps {
   onBack: () => void;
   userProfile: UserProfile | null;
+  darkMode?: boolean;
+  onToggleDarkMode?: () => void;
 }
 
-export function Settings({ onBack, userProfile }: SettingsProps) {
+export function Settings({ onBack, userProfile, darkMode = false, onToggleDarkMode }: SettingsProps) {
   const [notifications, setNotifications] = useState(notificationsEnabled(userProfile));
   const [readReceipts, setReadReceipts] = useState(true);
   const [ghostMode, setGhostMode] = useState(userProfile?.isGhostMode || false);
@@ -44,15 +48,31 @@ export function Settings({ onBack, userProfile }: SettingsProps) {
     await firebaseDb.updateGhostMode(userProfile.id, newStatus);
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
+    if (!userProfile) return;
+    
+    // Construct the invite URL
+    const inviteUrl = `${window.location.origin}${window.location.pathname}?invite=${userProfile.invitationCode || ''}`;
+    const shareText = `Junte-se a mim no OPALA NEGRA, a rede de conexões de elite! Use meu código: ${userProfile.invitationCode}`;
+
     if (navigator.share) {
-      navigator.share({
-        title: 'OMIAI - Conexões Éticas',
-        text: 'Junte-se a mim no OMIAI, a primeira rede de conexões verificadas!',
-        url: window.location.href,
-      }).catch(console.error);
+      try {
+        await navigator.share({
+          title: 'OPALA NEGRA - Elite Connections',
+          text: shareText,
+          url: inviteUrl,
+        });
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') console.error(err);
+      }
     } else {
-      alert('Link de convite copiado para a área de transferência!');
+      try {
+        await navigator.clipboard.writeText(inviteUrl);
+        alert('Link de convite personalizado copiado para a área de transferência!');
+      } catch (err) {
+        console.error('Falha ao copiar link:', err);
+        alert(`Copie seu código manualmente: ${userProfile.invitationCode}`);
+      }
     }
   };
 
@@ -141,6 +161,24 @@ export function Settings({ onBack, userProfile }: SettingsProps) {
                   className={`w-12 h-6 rounded-full relative transition-colors ${ghostMode ? 'bg-brand-primary' : 'bg-gray-200'}`}
                 >
                   <div className={`absolute top-1 bg-white w-4 h-4 rounded-full shadow-md transition-all ${ghostMode ? 'right-1' : 'left-1'}`} />
+                </button>
+              </div>
+
+              <div className="p-6 flex items-center justify-between border-b border-brand-surface">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-2xl bg-brand-highlight flex items-center justify-center text-brand-primary">
+                    <Moon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-brand-primary">Modo Noturno</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wide">Interface escura e sofisticada</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={onToggleDarkMode}
+                  className={`w-12 h-6 rounded-full relative transition-colors ${darkMode ? 'bg-brand-primary' : 'bg-gray-200'}`}
+                >
+                  <div className={`absolute top-1 bg-white w-4 h-4 rounded-full shadow-md transition-all ${darkMode ? 'right-1' : 'left-1'}`} />
                 </button>
               </div>
 
@@ -246,6 +284,8 @@ export function Settings({ onBack, userProfile }: SettingsProps) {
               </button>
             </div>
           </section>
+
+          <AdSpace variant="inline" userPlan={userProfile?.plan} userId={userProfile?.id} />
 
           <section className="pt-4">
             <button 

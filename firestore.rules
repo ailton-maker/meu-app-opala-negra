@@ -92,5 +92,14 @@ service cloud.firestore {
       allow read: if isConvParticipant();
       allow create: if isConvParticipant() && isValidMessage(incoming());
     }
+
+    // Ad Click Rules
+    match /ad_clicks/{clickId} {
+      function isValidAdClick(data) {
+        return data.keys().hasAll(['userId', 'adId', 'timestamp']) &&
+               data.userId == request.auth.uid;
+      }
+      allow create: if isSignedIn() && isValidAdClick(incoming());
+    }
   }
 }

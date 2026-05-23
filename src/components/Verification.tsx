@@ -58,28 +58,35 @@ export function Verification({ onComplete }: { onComplete: (gender: Gender, phot
     setCepError(null);
     
     try {
-      // Use a slightly longer timeout or different approach if fetch fails
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-      const response = await fetch(`https://viacep.com.br/ws/${cleaned}/json/`, {
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-
-      if (!response.ok) throw new Error('Network response was not ok');
-      
-      const data = await response.json();
+      // Primary Attempt: ViaCEP
+      let response = await fetch(`https://viacep.com.br/ws/${cleaned}/json/`);
+      let data = await response.json();
       
       if (data.erro) {
-        setCepError('CEP não encontrado em nossa base de dados.');
-        setSelectedLocation('');
+        // Fallback Attempt: BrasilAPI
+        const fallbackResponse = await fetch(`https://brasilapi.com.br/api/cep/v1/${cleaned}`);
+        if (!fallbackResponse.ok) {
+          throw new Error('Fallback failed');
+        }
+        const fallbackData = await fallbackResponse.json();
+        setSelectedLocation(`${fallbackData.city}, ${fallbackData.state}`);
       } else {
         setSelectedLocation(`${data.localidade}, ${data.uf}`);
       }
     } catch (err) {
-      console.error('ViaCEP error:', err);
-      setCepError('Conexão instável. Verifique o CEP e tente novamente.');
+      console.error('CEP lookup error:', err);
+      // Try one more time with BrasilAPI directly if primary fails with exception
+      try {
+        const directFallback = await fetch(`https://brasilapi.com.br/api/cep/v1/${cleaned}`);
+        if (directFallback.ok) {
+          const fbData = await directFallback.json();
+          setSelectedLocation(`${fbData.city}, ${fbData.state}`);
+          return;
+        }
+      } catch (e) {
+        console.error('Final fallback error:', e);
+      }
+      setCepError('Não foi possível localizar este CEP. Verifique os números.');
     } finally {
       setIsVerifyingCep(false);
     }

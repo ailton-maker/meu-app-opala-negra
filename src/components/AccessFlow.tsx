@@ -9,19 +9,20 @@ import {
   Info,
   CheckCircle2,
   Lock,
-  UserPlus,
-  Gem
+  UserPlus
 } from 'lucide-react';
 
 import { signInWithGoogle } from '../services/firebase';
+import { StoneFractalLogo } from './StoneFractalLogo';
 
 interface AccessFlowProps {
   inviteCode: string;
   onUpdateInviteCode: (code: string) => void;
   onComplete: (authInfo: { method: string; value: string; inviteCode?: string }) => void;
+  darkMode?: boolean;
 }
 
-export function AccessFlow({ inviteCode, onUpdateInviteCode, onComplete }: AccessFlowProps) {
+export function AccessFlow({ inviteCode, onUpdateInviteCode, onComplete, darkMode = false }: AccessFlowProps) {
   const [step, setStep] = useState<'splash' | 'auth' | 'input' | 'ethics'>('splash');
   const [method, setMethod] = useState<'email' | 'phone' | null>(null);
   const [value, setValue] = useState('');
@@ -75,10 +76,25 @@ export function AccessFlow({ inviteCode, onUpdateInviteCode, onComplete }: Acces
             onClick={() => setStep('auth')}
           >
             <div className="absolute top-10 right-10 z-20 flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-white/10 backdrop-blur-md flex items-center justify-center">
-                <Gem className="w-3 h-3 text-brand-mango" />
-              </div>
-              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em]">OPALA <span className="text-brand-mango">NEGRA</span></p>
+              {darkMode ? (
+                <div className="w-6 h-6 rounded-lg bg-white/10 backdrop-blur-md flex items-center justify-center">
+                  <StoneFractalLogo className="w-3.5 h-3.5" darkMode={true} />
+                </div>
+              ) : (
+                /* Transparent background as requested: "fundo transparente" */
+                <div className="w-6 h-6 flex items-center justify-center bg-transparent">
+                  <StoneFractalLogo className="w-6 h-6" darkMode={false} />
+                </div>
+              )}
+              <p className={`text-[10px] font-black uppercase tracking-[0.4em] transition-colors ${
+                darkMode ? 'text-white/40' : 'text-[#0D5C75]'
+              }`}>
+                OPALA {darkMode ? (
+                  <span className="text-brand-mango">NEGRA</span>
+                ) : (
+                  <span className="text-[#0D5C75] font-black">NEGRA</span>
+                )}
+              </p>
             </div>
             
             <motion.div 
@@ -116,8 +132,25 @@ export function AccessFlow({ inviteCode, onUpdateInviteCode, onComplete }: Acces
             className="w-full max-w-md px-8 pt-24 pb-12 flex flex-col h-full z-10"
           >
             <div className="absolute top-10 right-10 flex items-center gap-2">
-              <Gem className="w-3 h-3 text-brand-mango" />
-              <p className="text-[10px] font-black text-brand-primary/20 uppercase tracking-[0.4em]">OPALA <span className="text-brand-mango">NEGRA</span></p>
+              {darkMode ? (
+                <div className="w-5 h-5 rounded-md bg-brand-primary flex items-center justify-center">
+                  <StoneFractalLogo className="w-3 h-3" darkMode={true} />
+                </div>
+              ) : (
+                /* Transparent background as requested: "fundo transparente" */
+                <div className="w-5 h-5 flex items-center justify-center bg-transparent">
+                  <StoneFractalLogo className="w-4.5 h-4.5" darkMode={false} />
+                </div>
+              )}
+              <p className={`text-[10px] font-black uppercase tracking-[0.4em] transition-colors ${
+                darkMode ? 'text-brand-primary/20' : 'text-[#0D5C75]'
+              }`}>
+                OPALA {darkMode ? (
+                  <span className="text-brand-mango">NEGRA</span>
+                ) : (
+                  <span className="text-[#0D5C75] font-black">NEGRA</span>
+                )}
+              </p>
             </div>
 
             <h1 className="text-4xl font-black text-brand-primary tracking-tighter mb-4 leading-tight mt-12">

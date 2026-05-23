@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Shield, 
   MessageSquare, 
@@ -30,9 +30,12 @@ import {
   Heart,
   UserRound,
   Compass,
-  Gem
+  Gem,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { View, Gender, UserProfile } from '../types';
+import { StoneFractalLogo } from './StoneFractalLogo';
 
 interface TopAppBarProps {
   view: View;
@@ -41,9 +44,20 @@ interface TopAppBarProps {
   showBack?: boolean;
   onBack?: () => void;
   userProfile: UserProfile | null;
+  darkMode?: boolean;
+  onToggleDarkMode?: () => void;
 }
 
-export function TopAppBar({ view, onNavigate, title = 'Opala Negra', showBack, onBack, userProfile }: TopAppBarProps) {
+export function TopAppBar({ 
+  view, 
+  onNavigate, 
+  title = 'Opala Negra', 
+  showBack, 
+  onBack, 
+  userProfile,
+  darkMode = false,
+  onToggleDarkMode
+}: TopAppBarProps) {
   const userImage = userProfile?.imageUrl || (userProfile?.gender === 'female' 
     ? "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop"
     : "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop");
@@ -58,20 +72,62 @@ export function TopAppBar({ view, onNavigate, title = 'Opala Negra', showBack, o
             </button>
           ) : (
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-brand-primary flex items-center justify-center shadow-lg shadow-brand-primary/20">
-                <Gem className="w-4 h-4 text-brand-mango" />
-              </div>
-              <span className="text-[12px] font-black tracking-tighter text-brand-primary uppercase">Opala <span className="text-brand-mango">Negra</span></span>
+              {darkMode ? (
+                /* Dark Mode keeps themed glossy container */
+                <div className="w-8 h-8 rounded-lg bg-brand-primary flex items-center justify-center shadow-lg shadow-brand-primary/20">
+                  <StoneFractalLogo className="w-4.5 h-4.5" darkMode={true} />
+                </div>
+              ) : (
+                /* Light Mode uses the transparent background as requested: "fundo transparente" */
+                <div className="w-8 h-8 flex items-center justify-center bg-transparent">
+                  <StoneFractalLogo className="w-7.5 h-7.5" darkMode={false} />
+                </div>
+              )}
+              <span className={`text-[12px] font-black tracking-tighter uppercase transition-colors ${
+                darkMode ? 'text-brand-primary' : 'text-[#0D5C75]'
+              }`}>
+                Opala {darkMode ? (
+                  <span className="text-brand-mango">Negra</span>
+                ) : (
+                  <span className="text-[#0D5C75] font-black">Negra</span>
+                )}
+              </span>
             </div>
           )}
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           {view === 'messages' && (
             <button onClick={() => onNavigate('transactions')} className="p-2 hover:bg-brand-highlight rounded-full text-brand-primary/40 transition-colors">
               <History className="w-5 h-5" />
             </button>
           )}
+
+          {onToggleDarkMode && (
+            <button 
+              onClick={onToggleDarkMode} 
+              className="p-2 text-brand-primary hover:bg-brand-highlight/60 rounded-full transition-all active:scale-90 flex items-center justify-center"
+              aria-label="Alternar tema"
+              title={darkMode ? "Ativar Modo Claro" : "Ativar Modo Escuro"}
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={darkMode ? "dark" : "light"}
+                  initial={{ rotate: -45, scale: 0.8, opacity: 0 }}
+                  animate={{ rotate: 0, scale: 1, opacity: 1 }}
+                  exit={{ rotate: 45, scale: 0.8, opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  {darkMode ? (
+                    <Sun className="w-5 h-5 text-brand-mango" />
+                  ) : (
+                    <Moon className="w-5 h-5 text-brand-primary/60" />
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </button>
+          )}
+
           <button 
             onClick={() => onNavigate('profile')}
             className="w-10 h-10 rounded-2xl bg-white p-0.5 overflow-hidden border-2 border-brand-primary/10 hover:border-brand-mango transition-all active:scale-95 shadow-sm"

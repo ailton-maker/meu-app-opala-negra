@@ -330,16 +330,26 @@ class FirebaseDB {
   async getAvailableProfiles(userProfile: UserProfile | null): Promise<UserProfile[]> {
     if (!userProfile) return [];
     try {
+      // 1. Get all interactions for this user to exclude them
+      const interactionsQuery = query(
+        collection(db, 'interactions'),
+        where('fromUserId', '==', userProfile.id)
+      );
+      const interactionsSnap = await getDocs(interactionsQuery);
+      const interactedIds = new Set(interactionsSnap.docs.map(doc => doc.data().toUserId));
+
+      // 2. Get potential profiles
       const q = query(
         collection(db, 'users'),
         where('gender', '==', userProfile.gender === 'male' ? 'female' : 'male'),
-        limit(50)
+        limit(100)
       );
       const querySnapshot = await getDocs(q);
       const profiles: UserProfile[] = [];
-      querySnapshot.forEach((doc) => {
-        if (doc.id !== userProfile.id) {
-          profiles.push(doc.data() as UserProfile);
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data() as UserProfile;
+        if (docSnap.id !== userProfile.id && !interactedIds.has(docSnap.id)) {
+          profiles.push(data);
         }
       });
       return profiles;
@@ -541,6 +551,21 @@ class FirebaseDB {
       });
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `users/${userId}`);
+    }
+  }
+
+  async trackAdClick(userId: string, adId: string, variant?: string, hoverDurationMs?: number) {
+    try {
+      await addDoc(collection(db, 'ad_clicks'), {
+        userId,
+        adId,
+        variant: variant || 'standard',
+        hoverDurationMs: hoverDurationMs !== undefined ? hoverDurationMs : null,
+        timestamp: serverTimestamp()
+      });
+    } catch (error) {
+      // Background telemetry, silent failure
+      console.error('Ad click tracking failed', error);
     }
   }
 

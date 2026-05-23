@@ -16,6 +16,7 @@ import {
 import { Gender, UserProfile } from '../types';
 import { ProfileDetail } from './ProfileDetail';
 import { QuickMessage } from './QuickMessage';
+import { AdSpace } from './AdSpace';
 import { firebaseDb } from '../services/db';
 
 const ALL_INTERESTS = [
@@ -26,7 +27,6 @@ const ALL_INTERESTS = [
 
 export function Discovery({ userProfile }: { userProfile: UserProfile | null }) {
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState<number | null>(null);
   const [showDetail, setShowDetail] = useState(false);
   const [showQuickMessage, setShowQuickMessage] = useState(false);
@@ -70,40 +70,37 @@ export function Discovery({ userProfile }: { userProfile: UserProfile | null }) 
     return filtered;
   }, [profiles, userProfile, explorerCity, ageRange, selectedInterests]);
 
-  const safeIndex = filteredProfiles.length > 0 ? currentIndex % filteredProfiles.length : 0;
-  const currentProfile = filteredProfiles.length > 0 ? filteredProfiles[safeIndex] : null;
+  const currentProfile = filteredProfiles.length > 0 ? filteredProfiles[0] : null;
 
   const handleNext = (dir: number) => {
     setDirection(dir);
+    // We don't increment index anymore, we remove the profile from the list
     setTimeout(() => {
-      setCurrentIndex(prev => prev + 1);
+      if (currentProfile) {
+        setProfiles(prev => prev.filter(p => p.id !== currentProfile.id));
+      }
       setDirection(null);
-    }, 500);
+    }, 450); // Matches exit animation
   };
 
-  const handleLike = async () => {
-    if (currentProfile && userProfile) {
-      await firebaseDb.likeProfile(userProfile.id, currentProfile.id);
-      setShowQuickMessage(true);
-    }
+  const handleLike = () => {
+    setShowQuickMessage(true);
   };
 
   const handleSendQuickMessage = async (message: string) => {
     if (currentProfile && userProfile) {
-      // In a real app, logic would find the generated conversation
+      // Background record
+      firebaseDb.likeProfile(userProfile.id, currentProfile.id);
+      
       setShowQuickMessage(false);
       handleNext(1);
-      const available = await firebaseDb.getAvailableProfiles(userProfile);
-      setProfiles(available);
     }
   };
 
   const handlePass = async () => {
     if (currentProfile && userProfile) {
-      await firebaseDb.passProfile(userProfile.id, currentProfile.id);
+      firebaseDb.passProfile(userProfile.id, currentProfile.id);
       handleNext(-1);
-      const available = await firebaseDb.getAvailableProfiles(userProfile);
-      setProfiles(available);
     }
   };
 
@@ -246,6 +243,7 @@ export function Discovery({ userProfile }: { userProfile: UserProfile | null }) 
 
       {/* Security Context Banner */}
       <div className="mt-6 mb-4 space-y-3">
+        <AdSpace variant="card" userPlan={userProfile?.plan} userId={userProfile?.id} />
         <div className="bg-white/50 backdrop-blur-sm border border-brand-primary/5 rounded-[32px] p-5 flex items-start gap-4 shadow-sm">
           <div className="w-10 h-10 rounded-2xl bg-brand-mango flex items-center justify-center shrink-0 shadow-lg shadow-brand-mango/20">
             <Verified className="w-5 h-5 text-white" />

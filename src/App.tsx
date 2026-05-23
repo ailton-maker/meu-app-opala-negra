@@ -37,6 +37,21 @@ export default function App() {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    return localStorage.getItem('darkMode') === 'true' || 
+           (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('darkMode', 'true');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('darkMode', 'false');
+    }
+  }, [darkMode]);
+
   // Initialize from Firebase Auth
   useEffect(() => {
     firebaseDb.seedInitialData();
@@ -150,7 +165,14 @@ export default function App() {
           }} 
         />;
       case 'settings':
-        return <Settings onBack={handleBack} userProfile={userProfile} />;
+        return (
+          <Settings 
+            onBack={handleBack} 
+            userProfile={userProfile} 
+            darkMode={darkMode}
+            onToggleDarkMode={() => setDarkMode(!darkMode)}
+          />
+        );
       default:
         return <Discovery userProfile={userProfile} />;
     }
@@ -183,6 +205,7 @@ export default function App() {
       <AnimatePresence mode="wait">
         {currentView === 'access' ? (
           <AccessFlow 
+            darkMode={darkMode}
             inviteCode={tempInviteCode}
             onUpdateInviteCode={setTempInviteCode}
             onComplete={(authInfo) => {
@@ -249,6 +272,8 @@ export default function App() {
                 showBack={currentView === 'help'}
                 onBack={() => navigateTo('profile')}
                 userProfile={userProfile}
+                darkMode={darkMode}
+                onToggleDarkMode={() => setDarkMode(!darkMode)}
               />
             )}
 

@@ -57,6 +57,18 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["fromUserId", "toUserId", "type", "createdAt"]
+    },
+    "AdClick": {
+      "title": "Ad Click Track",
+      "description": "Tracking for ad interactions",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "adId": { "type": "string" },
+        "variant": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "adId", "timestamp"]
     }
   },
   "firestore": {
@@ -75,6 +87,10 @@
     "/interactions/{interactionId}": {
       "schema": "Interaction",
       "description": "Likes and passes for discovery filtering"
+    },
+    "/ad_clicks/{clickId}": {
+      "schema": "AdClick",
+      "description": "Ad engagement tracking"
     }
   }
 }

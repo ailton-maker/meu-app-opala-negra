@@ -1,15 +1,114 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
+
+:root {
+  --brand-primary: #D81B60; /* Dark Pink / Rosa Escuro */
+  --brand-secondary: #0D5C75; /* Petroleum Blue / Azul-Petróleo */
+  --brand-accent: #0D5C75;
+  --brand-mango: #D81B60;
+  --brand-surface: #FCFAF0; /* Marfim / Ivory Surface */
+  --brand-highlight: #FCE4EC; /* Soft light pink highlight */
+  
+  --bg-card: #FFFDF5; /* Soft Ivory/Marfim Card */
+  --bg-page: #FAF5E6; /* Luxurious Ivory/Marfim Page Background */
+  --text-main: #0B2B33; /* Deep Petroleum text for contrast and elegance */
+  --text-muted: #144955;
+  --text-light: #446C76;
+  --border-color: #EFE8D3; /* Golden Warm Ivory Border */
+
+  --glow-1: rgba(216, 27, 96, 0.35);
+  --glow-2: rgba(13, 92, 117, 0.75);
+  --glow-shadow-1a: inset 0 0 4px rgba(216, 27, 96, 0.15), 0 0 8px rgba(216, 27, 96, 0.25);
+  --glow-shadow-2a: inset 0 0 10px rgba(13, 92, 117, 0.45), 0 0 18px rgba(13, 92, 117, 0.55);
+}
+
+.dark {
+  --brand-primary: #00D2FF; /* Neon Blue */
+  --brand-secondary: #9C1A2C; /* Dark Red / Vermelho Escuro */
+  --brand-accent: #9C1A2C;
+  --brand-mango: #9C1A2C;
+  --brand-surface: #000000; /* Deep Black / Preto Profundo */
+  --brand-highlight: #1B0306; /* Dark Reddish Highlight */
+  
+  --bg-card: #050505; /* Black card */
+  --bg-page: #000000; /* Preto profundo */
+  --text-main: #FFFFFF;
+  --text-muted: #A3BFC9;
+  --text-light: #526D77;
+  --border-color: #1A0507; /* Dark red subtle border */
+
+  --glow-1: rgba(0, 210, 255, 0.35);
+  --glow-2: rgba(156, 26, 44, 0.75);
+  --glow-shadow-1a: inset 0 0 4px rgba(0, 210, 255, 0.15), 0 0 8px rgba(0, 210, 255, 0.25);
+  --glow-shadow-2a: inset 0 0 10px rgba(156, 26, 44, 0.45), 0 0 18px rgba(156, 26, 44, 0.55);
+}
+
+/* Force standard text-white to remain white in dark mode */
+.dark .text-white {
+  color: #FFFFFF !important;
+}
+.dark .text-white\/90 {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+.dark .text-white\/80 {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+.dark .text-white\/70 {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+.dark .text-white\/60 {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+.dark .text-white\/50 {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+.dark .text-white\/40 {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+.dark .text-white\/30 {
+  color: rgba(255, 255, 255, 0.3) !important;
+}
+.dark .text-white\/10 {
+  color: rgba(255, 255, 255, 0.1) !important;
+}
+.dark .bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+.dark .bg-white\/20 {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+.dark .bg-white\/5 {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+.dark .border-white\/10 {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+.dark .border-white\/20 {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+.dark .border-white\/5 {
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+.dark .border-white {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   
-  --color-brand-primary: #001A33; /* Navy Blue */
-  --color-brand-secondary: #30D5C8; /* Turquoise Blue */
-  --color-brand-accent: #FF69B4; /* Bubblegum Pink */
-  --color-brand-mango: #FF69B4; /* Mapping mango to Bubblegum Pink */
-  --color-brand-surface: #F0F8FF; /* AliceBlue light surface */
-  --color-brand-highlight: #E0FFFF; /* Light Cyan highlight */
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-mango: var(--brand-mango);
+  --color-brand-surface: var(--brand-surface);
+  --color-brand-highlight: var(--brand-highlight);
+  
+  --color-white: var(--bg-card);
+  --color-gray-50: var(--bg-page);
+  --color-gray-900: var(--text-main);
+  --color-gray-600: var(--text-muted);
+  --color-gray-400: var(--text-light);
+  --color-gray-100: var(--border-color);
 }
 
 @layer base {
@@ -18,4 +117,3 @@
     -webkit-tap-highlight-color: transparent;
   }
 }
-

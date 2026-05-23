@@ -14,6 +14,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useState } from 'react';
 import { UserProfile, View } from '../types';
+import { AdSpace } from './AdSpace';
 
 interface ReputationProps {
   userProfile: UserProfile | null;
@@ -28,16 +29,24 @@ export function Reputation({ userProfile, onNavigate }: ReputationProps) {
   if (!userProfile) return null;
 
   const handleShareInvite = () => {
-    const text = `Venha para o Opala Negra! Use meu código ${userProfile.invitationCode} e ganhe 1 semana de Premium grátis: https://opalanegra.app`;
+    const inviteUrl = `${window.location.origin}${window.location.pathname}?invite=${userProfile.invitationCode || ''}`;
+    const text = `Venha para o OPALA NEGRA! Use meu código ${userProfile.invitationCode} e ganhe 1 semana de Premium grátis.`;
+    
     if (navigator.share) {
       navigator.share({
         title: 'Opala Negra Invite',
         text: text,
-        url: 'https://opalanegra.app'
+        url: inviteUrl
+      }).catch(err => {
+        if ((err as Error).name !== 'AbortError') console.error(err);
       });
     } else {
-      navigator.clipboard.writeText(text);
-      alert('Código copiado para a área de transferência!');
+      navigator.clipboard.writeText(`${text} Acesse: ${inviteUrl}`)
+        .then(() => alert('Link de convite copiado para a área de transferência!'))
+        .catch(err => {
+          console.error('Falha ao copiar:', err);
+          alert(`Copie seu código manualmente: ${userProfile.invitationCode}`);
+        });
     }
   };
 
@@ -177,6 +186,8 @@ export function Reputation({ userProfile, onNavigate }: ReputationProps) {
           </div>
         </div>
       </section>
+
+      <AdSpace variant="banner" userPlan={userProfile?.plan} userId={userProfile?.id} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div className="bg-brand-primary text-white p-8 rounded-[48px] flex flex-col justify-between min-h-[220px] shadow-2xl shadow-brand-primary/20 relative overflow-hidden group">
