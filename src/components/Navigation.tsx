@@ -73,9 +73,8 @@ export function TopAppBar({
           ) : (
             <div className="flex items-center gap-2">
               {darkMode ? (
-                /* Dark Mode keeps themed glossy container */
-                <div className="w-8 h-8 rounded-lg bg-brand-primary flex items-center justify-center shadow-lg shadow-brand-primary/20">
-                  <StoneFractalLogo className="w-4.5 h-4.5" darkMode={true} />
+                <div className="w-8 h-8 flex items-center justify-center bg-transparent">
+                  <StoneFractalLogo className="w-7.5 h-7.5" darkMode={true} />
                 </div>
               ) : (
                 /* Light Mode uses the transparent background as requested: "fundo transparente" */
@@ -84,12 +83,12 @@ export function TopAppBar({
                 </div>
               )}
               <span className={`text-[12px] font-black tracking-tighter uppercase transition-colors ${
-                darkMode ? 'text-brand-primary' : 'text-[#0D5C75]'
+                darkMode ? 'text-white' : 'text-[#4B0082]'
               }`}>
                 Opala {darkMode ? (
-                  <span className="text-brand-mango">Negra</span>
+                  <span className="text-[#D63031]">Negra</span>
                 ) : (
-                  <span className="text-[#0D5C75] font-black">Negra</span>
+                  <span className="text-[#8A2BE2] font-black">Negra</span>
                 )}
               </span>
             </div>

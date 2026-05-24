@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
+// @ts-ignore
+import * as ReactWindow from 'react-window';
+
+const List = (ReactWindow as any).FixedSizeList || (ReactWindow as any).default?.FixedSizeList;
 import { 
   ShieldCheck,
   Lock,
@@ -269,6 +273,63 @@ export function Messages({ onOpenChat, userProfile }: { onOpenChat: (id: string)
     }
   };
 
+  const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => {
+    const conv = conversations[index];
+    if (!conv) return null;
+    return (
+      <div style={style} className="pb-3 pr-1">
+        <div className="relative group">
+          <button 
+            onClick={() => onOpenChat(conv.id)}
+            className="w-full flex items-center gap-4 p-4 bg-white border border-gray-100 rounded-3xl hover:bg-gray-50 transition-colors active:scale-[0.99] h-[88px]"
+          >
+            <div className="relative flex-shrink-0">
+              <div className="w-14 h-14 rounded-2xl bg-brand-highlight flex items-center justify-center overflow-hidden">
+                {conv.targetProfile.imageUrl ? (
+                  <img src={conv.targetProfile.imageUrl} className="w-full h-full object-cover" />
+                ) : (
+                  <UserRound className="w-8 h-8 text-brand-primary/20" />
+                )}
+              </div>
+              {conv.targetProfile.verificationLevel >= 2 && (
+                <div className="absolute -bottom-1 -right-1 bg-white p-0.5 rounded-full">
+                  <Verified className="w-5 h-5 text-brand-mango fill-brand-mango border-2 border-white rounded-full" />
+                </div>
+              )}
+            </div>
+            
+            <div className="flex-grow text-left min-w-0">
+              <div className="flex items-center justify-between mb-1 gap-2">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <h3 className="font-bold text-brand-primary truncate">{conv.targetProfile.name}</h3>
+                  {conv.unreadCount > 0 && <span className="w-1.5 h-1.5 rounded-full bg-brand-mango animate-pulse flex-shrink-0" />}
+                </div>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter flex-shrink-0">
+                  {conv.updatedAt && (
+                    ((conv.updatedAt as any) instanceof Date) ? 
+                      (conv.updatedAt as any).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) :
+                      (conv.updatedAt as any).toDate ? 
+                        (conv.updatedAt as any).toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) :
+                        new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  )}
+                </span>
+              </div>
+              <p className="text-sm text-gray-500 truncate font-medium">{conv.lastMessage.text}</p>
+            </div>
+
+            {conv.unreadCount > 0 ? (
+              <div className="w-5 h-5 bg-brand-mango text-white rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                {conv.unreadCount}
+              </div>
+            ) : (
+              <ChevronRight className="w-5 h-5 text-gray-200 group-hover:text-brand-secondary flex-shrink-0" />
+            )}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="pt-16 pb-24 px-5 max-w-lg mx-auto h-full overflow-y-auto bg-linear-to-b from-white to-brand-highlight/30">
       <div className="mt-8 mb-6 flex items-end justify-between">
@@ -292,56 +353,14 @@ export function Messages({ onOpenChat, userProfile }: { onOpenChat: (id: string)
             <p className="text-sm font-bold uppercase tracking-widest">Nenhuma conversa ainda</p>
           </div>
         ) : (
-          conversations.map(conv => (
-            <div key={conv.id} className="relative group">
-              <button 
-                onClick={() => onOpenChat(conv.id)}
-                className="w-full flex items-center gap-4 p-4 bg-white border border-gray-100 rounded-3xl hover:bg-gray-50 transition-colors active:scale-[0.99]"
-              >
-                <div className="relative">
-                  <div className="w-14 h-14 rounded-2xl bg-brand-highlight flex items-center justify-center overflow-hidden">
-                    {conv.targetProfile.imageUrl ? (
-                      <img src={conv.targetProfile.imageUrl} className="w-full h-full object-cover" />
-                    ) : (
-                      <UserRound className="w-8 h-8 text-brand-primary/20" />
-                    )}
-                  </div>
-                  {conv.targetProfile.verificationLevel >= 2 && (
-                    <div className="absolute -bottom-1 -right-1 bg-white p-0.5 rounded-full">
-                      <Verified className="w-5 h-5 text-brand-mango fill-brand-mango border-2 border-white rounded-full" />
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex-grow text-left">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-1.5">
-                      <h3 className="font-bold text-brand-primary">{conv.targetProfile.name}</h3>
-                      {conv.unreadCount > 0 && <span className="w-1.5 h-1.5 rounded-full bg-brand-mango animate-pulse" />}
-                    </div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
-                      {conv.updatedAt && (
-                        (conv.updatedAt instanceof Date) ? 
-                          conv.updatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) :
-                          (conv.updatedAt as any).toDate ? 
-                            (conv.updatedAt as any).toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) :
-                            new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                      )}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-500 line-clamp-1 font-medium">{conv.lastMessage.text}</p>
-                </div>
-
-                {conv.unreadCount > 0 ? (
-                  <div className="w-5 h-5 bg-brand-mango text-white rounded-full flex items-center justify-center text-[10px] font-bold">
-                    {conv.unreadCount}
-                  </div>
-                ) : (
-                  <ChevronRight className="w-5 h-5 text-gray-200 group-hover:text-brand-secondary" />
-                )}
-              </button>
-            </div>
-          ))
+          <List
+            height={480}
+            itemCount={conversations.length}
+            itemSize={102}
+            width="100%"
+          >
+            {Row}
+          </List>
         )}
       </div>
     </div>

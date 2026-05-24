@@ -9,14 +9,74 @@ import {
   TrendingDown,
   ArrowLeft
 } from 'lucide-react';
+// @ts-ignore
+import * as ReactWindow from 'react-window';
+
+const List = (ReactWindow as any).FixedSizeList || (ReactWindow as any).default?.FixedSizeList;
 
 export function TransactionLedger({ onBack }: { onBack: () => void }) {
-  const transactions = [
-    { id: '1', plan: 'Plano R$ 15', nsu: '49203841029', amount: 'R$ 15,00', status: 'Aprovado', date: '24 Out, 2023', time: '14:32' },
-    { id: '2', plan: 'Plano R$ 10', nsu: '49203841030', amount: 'R$ 10,00', status: 'Pendente', date: '24 Out, 2023', time: '15:10' },
-    { id: '3', plan: 'Plano R$ 7', nsu: '49203841031', amount: 'R$ 7,00', status: 'Aprovado', date: '23 Out, 2023', time: '09:15' },
-    { id: '4', plan: 'Plano R$ 15', nsu: '49203841028', amount: 'R$ 15,00', status: 'Aprovado', date: '22 Out, 2023', time: '18:45' },
+  // Generate a larger set of mock transactions to demonstrate react-window virtualization
+  const baseTransactions = [
+    { plan: 'Plano R$ 15', amount: 'R$ 15,00', status: 'Aprovado' },
+    { plan: 'Plano R$ 10', amount: 'R$ 10,00', status: 'Pendente' },
+    { plan: 'Plano R$ 7', amount: 'R$ 7,00', status: 'Aprovado' },
+    { plan: 'Plano R$ 25', amount: 'R$ 25,00', status: 'Aprovado' },
+    { plan: 'Plano R$ 50', amount: 'R$ 50,00', status: 'Aprovado' },
   ];
+
+  const transactions = Array.from({ length: 500 }, (_, index) => {
+    const base = baseTransactions[index % baseTransactions.length];
+    const id = (index + 1).toString();
+    const nsu = (49203841000 + index).toString();
+    const day = Math.max(1, 24 - Math.floor(index / 15)).toString().padStart(2, '0');
+    const hour = (10 + (index % 12)).toString().padStart(2, '0');
+    const minute = (10 + (index % 49)).toString().padStart(2, '0');
+    return {
+      id,
+      plan: base.plan,
+      nsu,
+      amount: base.amount,
+      status: base.status,
+      date: `${day} Out, 2023`,
+      time: `${hour}:${minute}`
+    };
+  });
+
+  const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => {
+    const tx = transactions[index];
+    if (!tx) return null;
+    const isApproved = tx.status === 'Aprovado' || tx.status === 'Approved';
+    return (
+      <div style={style} className="pb-3 pr-2">
+        <div className="group bg-indigo-900/10 border border-white/5 rounded-[32px] p-6 flex items-center justify-between hover:bg-indigo-900/30 transition-all cursor-pointer relative overflow-hidden h-[112px]">
+          <div className={`absolute left-0 top-0 bottom-0 w-1.5 opacity-40 transition-all group-hover:opacity-100 ${
+            isApproved ? 'bg-emerald-400' : 'bg-amber-400'
+          }`} />
+          
+          <div className="flex items-center gap-6">
+            <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-indigo-100 group-hover:scale-105 transition-transform shrink-0">
+              {isApproved ? <Receipt className="w-7 h-7" /> : <Clock className="w-7 h-7" />}
+            </div>
+            <div className="min-w-0">
+              <p className="text-lg font-black tracking-tight text-white m-0 truncate leading-none">{tx.plan}</p>
+              <p className="text-[10px] font-bold text-indigo-100/30 uppercase tracking-widest mt-1.5">NSU: {tx.nsu}</p>
+            </div>
+          </div>
+
+          <div className="text-right shrink-0">
+            <p className="text-xl font-black text-white m-0 leading-none">{tx.amount}</p>
+            <div className="flex items-center justify-end gap-1.5 mt-1.5">
+              <span className={`w-1.5 h-1.5 rounded-full ${isApproved ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+              <span className={`text-[10px] font-black uppercase tracking-widest ${
+                isApproved ? 'text-emerald-400' : 'text-amber-400'
+              }`}>{tx.status}</span>
+            </div>
+            <p className="text-[10px] font-bold text-indigo-100/20 mt-1.5 uppercase tracking-tighter">{tx.date} • {tx.time}</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="fixed inset-0 z-[100] bg-indigo-950 text-indigo-50 flex flex-col pt-safe overflow-y-auto">
@@ -35,7 +95,7 @@ export function TransactionLedger({ onBack }: { onBack: () => void }) {
         </div>
       </header>
 
-      <main className="pt-24 pb-32 px-6 max-w-4xl mx-auto w-full space-y-12">
+      <main className="pt-24 pb-32 px-6 max-w-4xl mx-auto w-full space-y-12 animate-fade-in">
         <div className="bg-indigo-900/40 border border-emerald-400/10 rounded-[32px] p-6 flex items-start gap-4 shadow-3xl">
           <ShieldCheck className="w-6 h-6 text-emerald-400 shrink-0 mt-1" />
           <div>
@@ -80,34 +140,14 @@ export function TransactionLedger({ onBack }: { onBack: () => void }) {
           </div>
 
           <div className="space-y-3">
-            {transactions.map(tx => (
-              <div key={tx.id} className="group bg-indigo-900/10 border border-white/5 rounded-[32px] p-6 flex items-center justify-between hover:bg-indigo-900/30 transition-all cursor-pointer relative overflow-hidden">
-                <div className={`absolute left-0 top-0 bottom-0 w-1.5 opacity-40 transition-all group-hover:opacity-100 ${
-                  tx.status === 'Approved' ? 'bg-emerald-400' : 'bg-amber-400'
-                }`} />
-                
-                <div className="flex items-center gap-6">
-                  <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-indigo-100 group-hover:scale-105 transition-transform">
-                    {tx.status === 'Approved' ? <Receipt className="w-7 h-7" /> : <Clock className="w-7 h-7" />}
-                  </div>
-                  <div>
-                    <p className="text-lg font-black tracking-tight text-white">{tx.plan}</p>
-                    <p className="text-[10px] font-bold text-indigo-100/30 uppercase tracking-widest mt-1">NSU: {tx.nsu}</p>
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <p className="text-xl font-black text-white">{tx.amount}</p>
-                  <div className="flex items-center justify-end gap-1.5 mt-1">
-                    <span className={`w-1.5 h-1.5 rounded-full ${tx.status === 'Approved' ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-                    <span className={`text-[10px] font-black uppercase tracking-widest ${
-                      tx.status === 'Approved' ? 'text-emerald-400' : 'text-amber-400'
-                    }`}>{tx.status}</span>
-                  </div>
-                  <p className="text-[10px] font-bold text-indigo-100/20 mt-2 uppercase tracking-tighter">{tx.date} • {tx.time}</p>
-                </div>
-              </div>
-            ))}
+            <List
+              height={450}
+              itemCount={transactions.length}
+              itemSize={124}
+              width="100%"
+            >
+              {Row}
+            </List>
           </div>
 
           <div className="mt-12 flex justify-center pb-20">

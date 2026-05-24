@@ -21,7 +21,7 @@ import { MapComponent } from './MapComponent';
 
 
 export function Verification({ onComplete }: { onComplete: (gender: Gender, photos: string[], location: string, video?: string) => void }) {
-  const [step, setStep] = useState<'consent' | 'gender' | 'location' | 'photos' | 'video' | 'thumb'>('consent');
+  const [step, setStep] = useState<'consent' | 'gender' | 'location' | 'photos' | 'video' | 'thumb' | 'concluir'>('consent');
   const [agreed, setAgreed] = useState(false);
   const [selectedGender, setSelectedGender] = useState<Gender | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<string>('');

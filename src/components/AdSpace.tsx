@@ -1,5 +1,5 @@
 import React, { memo, useState, useRef } from 'react';
-import { ExternalLink, Tag, Sparkles, Crown } from 'lucide-react';
+import { ExternalLink, Tag, Sparkles, Crown, Share2, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PlanTier } from '../types';
 import { firebaseDb } from '../services/db';
@@ -16,6 +16,32 @@ export const AdSpace = memo(({ variant = 'banner', userPlan, userId, adId = 'pre
   const hoverStartTimeRef = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number; size: number }>>([]);
+  const [shared, setShared] = useState(false);
+
+  const handleShare = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    const shareData = {
+      title: 'Opala Negra - Plano Gold',
+      text: 'Acesse eventos exclusivos e experiências de elite reservadas para membros Gold no ecossistema Opala Negra.',
+      url: window.location.origin + '?tab=premium'
+    };
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share(shareData);
+        setShared(true);
+        setTimeout(() => setShared(false), 2000);
+      } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(shareData.url);
+        setShared(true);
+        setTimeout(() => setShared(false), 2000);
+      }
+    } catch (error) {
+      if ((error as Error).name !== 'AbortError') {
+        console.error('Erro ao compartilhar:', error);
+      }
+    }
+  };
 
   if (userPlan === 'gold') return null;
 
@@ -60,7 +86,7 @@ export const AdSpace = memo(({ variant = 'banner', userPlan, userId, adId = 'pre
 
   return (
     <div 
-      className="relative w-full"
+      className="relative w-full ad-space-wrapper"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -100,39 +126,9 @@ export const AdSpace = memo(({ variant = 'banner', userPlan, userId, adId = 'pre
         )}
       </AnimatePresence>
 
-      <motion.div 
+      <div 
         ref={containerRef}
         onClick={handleClick}
-        initial={{ opacity: 0, y: 5 }}
-        animate={{ 
-          opacity: 1, 
-          y: 0,
-          scale: [1, 1.015, 1],
-          boxShadow: [
-            "0 0 10px var(--glow-1), 0 0 2px var(--glow-2)",
-            "0 0 22px var(--glow-2), 0 0 8px var(--glow-1)",
-            "0 0 10px var(--glow-1), 0 0 2px var(--glow-2)"
-          ]
-        }}
-        whileHover={{ 
-          scale: 1.035,
-          transition: { type: "spring", stiffness: 400, damping: 25 }
-        }}
-        transition={{ 
-          opacity: { duration: 0.3, delay: 0.1 },
-          y: { duration: 0.3, delay: 0.1 },
-          scale: {
-            repeat: Infinity,
-            repeatType: "reverse",
-            duration: 2.5,
-            ease: "easeInOut"
-          },
-          boxShadow: {
-            repeat: Infinity,
-            duration: 3,
-            ease: "easeInOut"
-          }
-        }}
         className={`AdSpace relative overflow-hidden transition-shadow duration-300 cursor-pointer
           ${variant === 'banner' ? 'w-full py-4 px-6 mb-6 rounded-2xl border border-brand-mango/20 bg-brand-primary/[0.02]' : ''}
           ${variant === 'card' ? 'w-full py-8 px-8 rounded-[48px] flex flex-col items-center justify-center text-center bg-linear-to-br from-brand-secondary to-brand-primary border border-white/10 mb-6 text-white' : ''}
@@ -199,9 +195,27 @@ export const AdSpace = memo(({ variant = 'banner', userPlan, userId, adId = 'pre
             ease: "easeInOut"
           }}
         />
-      <div className="absolute top-4 right-5 z-20 flex items-center gap-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black font-extrabold text-[8px] tracking-widest uppercase px-2.5 py-1 rounded-full shadow-lg shadow-amber-500/20 border border-amber-300/40 select-none">
-        <Crown className="w-2.5 h-2.5 fill-black" strokeWidth={2.5} />
-        <span>Plano Gold</span>
+      <div className="absolute top-4 right-5 z-20 flex items-center gap-2">
+        <button
+          onClick={handleShare}
+          className={`p-1.5 rounded-full transition-all flex items-center justify-center hover:scale-110 active:scale-95 cursor-pointer ${
+            variant === 'card' 
+              ? 'bg-white/20 text-white hover:bg-white/30 border border-white/10' 
+              : 'bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 border border-brand-primary/15'
+          }`}
+          title={shared ? "Link copiado!" : "Compartilhar Plano Gold"}
+        >
+          {shared ? (
+            <Check className="w-3 h-3 text-emerald-400" strokeWidth={3} />
+          ) : (
+            <Share2 className="w-3 h-3" />
+          )}
+        </button>
+
+        <div className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black font-extrabold text-[8px] tracking-widest uppercase px-2.5 py-1 rounded-full shadow-lg shadow-amber-500/20 border border-amber-300/40 select-none">
+          <Crown className="w-2.5 h-2.5 fill-black" strokeWidth={2.5} />
+          <span>Plano Gold</span>
+        </div>
       </div>
  
       <div className={`flex ${variant === 'card' ? 'flex-col items-center gap-6' : 'flex-row items-center gap-4'}`}>
@@ -239,7 +253,7 @@ export const AdSpace = memo(({ variant = 'banner', userPlan, userId, adId = 'pre
           <div className="absolute -top-12 -right-12 w-40 h-40 bg-white/20 rounded-full blur-[60px]" />
         </>
       )}
-      </motion.div>
+      </div>
     </div>
   );
 });

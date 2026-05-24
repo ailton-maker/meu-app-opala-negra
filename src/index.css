@@ -2,45 +2,45 @@
 @import "tailwindcss";
 
 :root {
-  --brand-primary: #D81B60; /* Dark Pink / Rosa Escuro */
-  --brand-secondary: #0D5C75; /* Petroleum Blue / Azul-Petróleo */
-  --brand-accent: #0D5C75;
-  --brand-mango: #D81B60;
-  --brand-surface: #FCFAF0; /* Marfim / Ivory Surface */
-  --brand-highlight: #FCE4EC; /* Soft light pink highlight */
+  --brand-primary: #4B0082; /* Deep Indigo / Índigo Profundo */
+  --brand-secondary: #8A2BE2; /* Intense Violet / Violeta Intenso */
+  --brand-accent: #8A2BE2;
+  --brand-mango: #DA70D6; /* Lavender / Suave tom de lavanda */
+  --brand-surface: #F5F5F5; /* Crisp White / Branco nítido */
+  --brand-highlight: #FAF9F6;
   
-  --bg-card: #FFFDF5; /* Soft Ivory/Marfim Card */
-  --bg-page: #FAF5E6; /* Luxurious Ivory/Marfim Page Background */
-  --text-main: #0B2B33; /* Deep Petroleum text for contrast and elegance */
-  --text-muted: #144955;
-  --text-light: #446C76;
-  --border-color: #EFE8D3; /* Golden Warm Ivory Border */
+  --bg-card: #FFFFFF; /* Pure Crisp White */
+  --bg-page: #F5F5F5; /* Branco nítido background */
+  --text-main: #1F0033; /* Dark indigo for great contrast */
+  --text-muted: #3D0066;
+  --text-light: #6E30A1;
+  --border-color: #E1D5EC; /* Subtle lavender border */
 
-  --glow-1: rgba(216, 27, 96, 0.35);
-  --glow-2: rgba(13, 92, 117, 0.75);
-  --glow-shadow-1a: inset 0 0 4px rgba(216, 27, 96, 0.15), 0 0 8px rgba(216, 27, 96, 0.25);
-  --glow-shadow-2a: inset 0 0 10px rgba(13, 92, 117, 0.45), 0 0 18px rgba(13, 92, 117, 0.55);
+  --glow-1: rgba(218, 112, 214, 0.35);
+  --glow-2: rgba(75, 0, 130, 0.75);
+  --glow-shadow-1a: inset 0 0 4px rgba(218, 112, 214, 0.15), 0 0 8px rgba(218, 112, 214, 0.25);
+  --glow-shadow-2a: inset 0 0 10px rgba(75, 0, 130, 0.45), 0 0 18px rgba(75, 0, 130, 0.55);
 }
 
 .dark {
-  --brand-primary: #00D2FF; /* Neon Blue */
-  --brand-secondary: #9C1A2C; /* Dark Red / Vermelho Escuro */
-  --brand-accent: #9C1A2C;
-  --brand-mango: #9C1A2C;
-  --brand-surface: #000000; /* Deep Black / Preto Profundo */
-  --brand-highlight: #1B0306; /* Dark Reddish Highlight */
+  --brand-primary: #00BFFF; /* Celeste Blue / Azul-celeste */
+  --brand-secondary: #D63031; /* Crimson / Carmesim */
+  --brand-accent: #D63031;
+  --brand-mango: #D63031;
+  --brand-surface: #1C1C1C; /* Deep Black / Preto profundo */
+  --brand-highlight: #2A2A2A; /* Smooth transitioning dark grey */
   
-  --bg-card: #050505; /* Black card */
-  --bg-page: #000000; /* Preto profundo */
+  --bg-card: #1C1C1C; /* Deep black card (#1C1C1C) */
+  --bg-page: #121212; /* Darkest transition background */
   --text-main: #FFFFFF;
-  --text-muted: #A3BFC9;
-  --text-light: #526D77;
-  --border-color: #1A0507; /* Dark red subtle border */
+  --text-muted: #A0A0A0; /* Soft Grey / Cinza suave */
+  --text-light: #707070;
+  --border-color: #2D2D2D; /* Crimson subtle border */
 
-  --glow-1: rgba(0, 210, 255, 0.35);
-  --glow-2: rgba(156, 26, 44, 0.75);
-  --glow-shadow-1a: inset 0 0 4px rgba(0, 210, 255, 0.15), 0 0 8px rgba(0, 210, 255, 0.25);
-  --glow-shadow-2a: inset 0 0 10px rgba(156, 26, 44, 0.45), 0 0 18px rgba(156, 26, 44, 0.55);
+  --glow-1: rgba(0, 191, 255, 0.35);
+  --glow-2: rgba(214, 48, 49, 0.75);
+  --glow-shadow-1a: inset 0 0 4px rgba(0, 191, 255, 0.15), 0 0 8px rgba(0, 191, 255, 0.25);
+  --glow-shadow-2a: inset 0 0 10px rgba(214, 48, 49, 0.45), 0 0 18px rgba(214, 48, 49, 0.55);
 }
 
 /* Force standard text-white to remain white in dark mode */
@@ -117,3 +117,48 @@
     -webkit-tap-highlight-color: transparent;
   }
 }
+
+@keyframes ad-breathing {
+  0% {
+    transform: rotate(-0.5deg) scale(1);
+    box-shadow: 0 0 10px var(--glow-1), 0 0 2px var(--glow-2);
+  }
+  50% {
+    transform: rotate(0.5deg) scale(1.015);
+    box-shadow: 0 0 22px var(--glow-2), 0 0 8px var(--glow-1);
+  }
+  100% {
+    transform: rotate(-0.5deg) scale(1);
+    box-shadow: 0 0 10px var(--glow-1), 0 0 2px var(--glow-2);
+  }
+}
+
+.AdSpace {
+  animation: ad-breathing 6s ease-in-out infinite;
+  transform-origin: center;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease !important;
+}
+
+.AdSpace:hover {
+  animation-play-state: paused;
+  transform: scale(1.035) rotate(0deg) !important;
+  box-shadow: 0 0 28px var(--glow-2), 0 0 14px var(--glow-1) !important;
+}
+
+@keyframes ad-fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ad-space-wrapper {
+  animation: ad-fade-in-up 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+
