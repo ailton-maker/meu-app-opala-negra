@@ -129,10 +129,10 @@ export const AdSpace = memo(({ variant = 'banner', userPlan, userId, adId = 'pre
       <div 
         ref={containerRef}
         onClick={handleClick}
-        className={`AdSpace relative overflow-hidden transition-shadow duration-300 cursor-pointer
-          ${variant === 'banner' ? 'w-full py-4 px-6 mb-6 rounded-2xl border border-brand-mango/20 bg-brand-primary/[0.02]' : ''}
-          ${variant === 'card' ? 'w-full py-8 px-8 rounded-[48px] flex flex-col items-center justify-center text-center bg-linear-to-br from-brand-secondary to-brand-primary border border-white/10 mb-6 text-white' : ''}
-          ${variant === 'inline' ? 'w-full py-3 px-4 my-4 rounded-xl border border-brand-mango/20 bg-brand-primary/[0.02]' : ''}
+        className={`AdSpace relative overflow-hidden rounded-3xl transition-shadow duration-300 cursor-pointer
+          ${variant === 'banner' ? 'w-full py-4 px-6 mb-6 border border-brand-mango/20 bg-brand-primary/[0.02]' : ''}
+          ${variant === 'card' ? 'w-full py-8 px-8 flex flex-col items-center justify-center text-center bg-linear-to-br from-brand-secondary to-brand-primary border border-white/10 mb-6 text-white' : ''}
+          ${variant === 'inline' ? 'w-full py-3 px-4 my-4 border border-brand-mango/20 bg-brand-primary/[0.02]' : ''}
         `}
       >
         {/* Subtle coordinate-based ripple effects */}

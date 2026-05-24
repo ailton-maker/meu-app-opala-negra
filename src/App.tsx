@@ -54,7 +54,6 @@ export default function App() {
 
   // Initialize from Firebase Auth
   useEffect(() => {
-    firebaseDb.seedInitialData();
     let unsubscribeProfile: (() => void) | null = null;
 
     // Check for invite code in URL
@@ -66,6 +65,13 @@ export default function App() {
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       if (user) {
+        // Seed mock profiles once we know we are authenticated!
+        try {
+          await firebaseDb.seedInitialData();
+        } catch (e) {
+          console.error("Seeding error:", e);
+        }
+
         if (unsubscribeProfile) unsubscribeProfile();
         
         unsubscribeProfile = firebaseDb.subscribeToProfile(user.uid, (profile) => {

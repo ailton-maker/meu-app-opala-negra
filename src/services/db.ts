@@ -328,7 +328,10 @@ class FirebaseDB {
   }
 
   async getAvailableProfiles(userProfile: UserProfile | null): Promise<UserProfile[]> {
-    if (!userProfile) return [];
+    if (!userProfile || !auth.currentUser) {
+      console.warn("Acesso não autorizado: Tentativa de listar perfis sem autenticação válida.");
+      return [];
+    }
     try {
       // 1. Get all interactions for this user to exclude them
       const interactionsQuery = query(
@@ -341,7 +344,6 @@ class FirebaseDB {
       // 2. Get potential profiles
       const q = query(
         collection(db, 'users'),
-        where('gender', '==', userProfile.gender === 'male' ? 'female' : 'male'),
         limit(100)
       );
       const querySnapshot = await getDocs(q);
@@ -349,7 +351,21 @@ class FirebaseDB {
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data() as UserProfile;
         if (docSnap.id !== userProfile.id && !interactedIds.has(docSnap.id)) {
-          profiles.push(data);
+          // Requisito: Mostrar apenas usuários que tenham cadastro ativo e válido
+          const hasActiveAndValidProfile = data && data.name && data.age >= 18 && data.imageUrl && data.location;
+          
+          if (hasActiveAndValidProfile) {
+            // Requisito: Garantir que dados sensíveis (email ou senha) não sejam exibidos / vazados
+            const { authInfo, ...sanitizedProfile } = data as any;
+            
+            // Excluir explicitamente quaisquer propriedades sensíveis
+            delete sanitizedProfile.email;
+            delete sanitizedProfile.senha;
+            delete sanitizedProfile.password;
+            delete sanitizedProfile.phone;
+            
+            profiles.push(sanitizedProfile as UserProfile);
+          }
         }
       });
       return profiles;

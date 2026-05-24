@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   ArrowLeft, 
   Bell, 
@@ -35,6 +36,7 @@ export function Settings({ onBack, userProfile, darkMode = false, onToggleDarkMo
   const [notifications, setNotifications] = useState(notificationsEnabled(userProfile));
   const [readReceipts, setReadReceipts] = useState(true);
   const [ghostMode, setGhostMode] = useState(userProfile?.isGhostMode || false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   function notificationsEnabled(profile: UserProfile | null) {
       // Mock logic: gold users might have different defaults
@@ -289,11 +291,8 @@ export function Settings({ onBack, userProfile, darkMode = false, onToggleDarkMo
 
           <section className="pt-4">
             <button 
-              onClick={async () => {
-                if (confirm('Deseja encerrar sua sessão segura?')) {
-                  await logout();
-                }
-              }}
+              id="settings-logout-btn"
+              onClick={() => setShowLogoutConfirm(true)}
               className="w-full h-16 bg-white border border-gray-100 rounded-3xl flex items-center justify-center gap-3 text-brand-primary font-black uppercase text-xs tracking-widest hover:bg-brand-highlight transition-all"
             >
               <LogOut className="w-5 h-5" />
@@ -302,6 +301,54 @@ export function Settings({ onBack, userProfile, darkMode = false, onToggleDarkMo
           </section>
         </div>
       </main>
+
+      <AnimatePresence>
+        {showLogoutConfirm && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-5">
+            {/* Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowLogoutConfirm(false)}
+              className="fixed inset-0 bg-brand-primary/80 backdrop-blur-md"
+            />
+            
+            {/* Modal Content */}
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="relative w-full max-w-sm bg-white rounded-[36px] p-8 text-center border border-brand-primary/5 shadow-2xl z-10"
+            >
+              <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <LogOut className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-black text-brand-primary tracking-tight mb-2">Encerrar Sessão Segura?</h3>
+              <p className="text-sm text-brand-primary/60 leading-relaxed mb-8">
+                Sua sessão atual de criptografia ponta a ponta será encerrada. Você precisará se autenticar novamente para acessar o aplicativo.
+              </p>
+              <div className="space-y-3">
+                <button 
+                  onClick={async () => {
+                    setShowLogoutConfirm(false);
+                    await logout();
+                  }}
+                  className="w-full py-4 bg-brand-primary hover:bg-brand-secondary text-white rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-md active:scale-[0.98]"
+                >
+                  Confirmar Saída
+                </button>
+                <button 
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="w-full py-4 bg-brand-highlight hover:bg-brand-primary/5 text-brand-primary rounded-2xl font-black uppercase tracking-widest text-xs transition-all active:scale-[0.98]"
+                >
+                  Voltar ao App
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

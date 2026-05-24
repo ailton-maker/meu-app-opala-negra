@@ -14,7 +14,7 @@ import {
   MapPin,
   Search
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 import { Gender } from '../types';
 import { MapComponent } from './MapComponent';
@@ -33,6 +33,67 @@ export function Verification({ onComplete }: { onComplete: (gender: Gender, phot
   const [recording, setRecording] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | undefined>(undefined);
   const [countdown, setCountdown] = useState(5);
+
+  const [recordingVideo, setRecordingVideo] = useState(false);
+  const [videoCountdown, setVideoCountdown] = useState(3);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    let currentStream: MediaStream | null = null;
+
+    async function startCamera() {
+      if (step === 'video' || step === 'thumb') {
+        try {
+          setCameraError(null);
+          const mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+            audio: false
+          });
+          currentStream = mediaStream;
+          setStream(mediaStream);
+        } catch (err: any) {
+          console.error("Erro ao acessar a câmera:", err);
+          setCameraError("Não foi possível acessar a câmera. Verifique as permissões de privacidade no navegador.");
+        }
+      } else {
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+          setStream(null);
+        }
+      }
+    }
+
+    startCamera();
+
+    return () => {
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [step]);
+
+  useEffect(() => {
+    if (stream && videoRef.current) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [step, stream]);
+
+  const startVideoRecording = () => {
+    setRecordingVideo(true);
+    let count = 3;
+    setVideoCountdown(count);
+    const interval = setInterval(() => {
+      count -= 1;
+      setVideoCountdown(count);
+      if (count === 0) {
+        clearInterval(interval);
+        setRecordingVideo(false);
+        setVideoUrl("mock-video-url");
+      }
+    }, 1000);
+  };
 
   const handleCepChange = (value: string) => {
     const cleaned = value.replace(/\D/g, '').slice(0, 8);
@@ -231,6 +292,36 @@ export function Verification({ onComplete }: { onComplete: (gender: Gender, phot
                   )}
                 </div>
 
+                <div className="space-y-2 mt-4">
+                  <div className="flex justify-between items-center px-1">
+                    <span className="text-[10px] font-black text-brand-primary/30 uppercase tracking-widest">Ou selecione uma capital</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { name: 'São Paulo, SP', cep: '01001-000' },
+                      { name: 'Rio de Janeiro, RJ', cep: '20000-000' },
+                      { name: 'Belo Horizonte, MG', cep: '30000-000' },
+                      { name: 'Brasília, DF', cep: '70000-000' }
+                    ].map(city => (
+                      <button 
+                        key={city.name}
+                        onClick={() => {
+                          setSelectedLocation(city.name);
+                          setCep(city.cep);
+                        }}
+                        type="button"
+                        className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border ${
+                          selectedLocation === city.name 
+                            ? 'bg-brand-mango/15 border-brand-mango text-brand-mango shadow-md' 
+                            : 'bg-brand-highlight/40 border-brand-primary/5 text-brand-primary/50 hover:bg-white hover:text-brand-primary'
+                        }`}
+                      >
+                        {city.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {selectedLocation && (
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.95 }}
@@ -341,20 +432,51 @@ export function Verification({ onComplete }: { onComplete: (gender: Gender, phot
         )}
 
         {step === 'video' && (
-          <div className="space-y-8">
-            <div className="aspect-video bg-brand-primary rounded-[40px] overflow-hidden flex items-center justify-center relative">
-               <Video className={`w-16 h-16 ${videoUrl ? 'text-brand-mango' : 'text-white/10'}`} />
-               {videoUrl && <div className="absolute inset-0 bg-brand-mango/10" />}
-               <div className="absolute top-6 right-6 bg-white/10 px-4 py-1.5 rounded-full text-[10px] font-black text-white/50 uppercase tracking-widest leading-none">MAX 15S</div>
-               {videoUrl && (
-                 <span className="absolute bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-black text-white uppercase tracking-widest">Vídeo Bio-Validado</span>
-               )}
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
+            <div className="aspect-video bg-black rounded-[40px] overflow-hidden flex items-center justify-center relative border border-brand-primary/10 shadow-2xl">
+              {stream && !videoUrl ? (
+                <video 
+                  ref={videoRef} 
+                  autoPlay 
+                  playsInline 
+                  muted 
+                  className="w-full h-full object-cover scale-x-[-1]"
+                />
+              ) : videoUrl ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-brand-primary text-center p-6">
+                  <div className="w-16 h-16 rounded-full bg-brand-mango/15 flex items-center justify-center mb-4 border border-brand-mango/30">
+                    <CheckCircle className="w-8 h-8 text-brand-mango" />
+                  </div>
+                  <span className="text-xs font-black text-white uppercase tracking-widest">Vídeo Gravado e Bio-Validado</span>
+                </div>
+              ) : (
+                <Video className="w-16 h-16 text-white/10 animate-pulse" />
+              )}
+              
+              {recordingVideo && (
+                <div className="absolute inset-0 border-4 border-rose-500/80 flex flex-col items-center justify-center bg-black/40">
+                  <div className="absolute top-6 left-6 flex items-center gap-2 bg-rose-600 text-white px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider animate-pulse">
+                    <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                    Gravando
+                  </div>
+                  <span className="text-5xl font-black text-white">{videoCountdown}s</span>
+                </div>
+              )}
+
+              {cameraError && !videoUrl && (
+                <div className="absolute inset-0 bg-brand-primary p-8 flex flex-col items-center justify-center text-center">
+                  <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest leading-relaxed mb-2">Permissão de Câmera Necessária</p>
+                  <p className="text-xs text-white/60 leading-relaxed max-w-xs">{cameraError}</p>
+                </div>
+              )}
+
+              <div className="absolute top-6 right-6 bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black text-white/60 uppercase tracking-widest leading-none">MAX 15S</div>
             </div>
             <div className="flex gap-4">
               {!videoUrl ? (
                 <>
                   <button onClick={() => setStep('thumb')} className="flex-1 h-14 border border-brand-primary/10 text-brand-primary/40 font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-brand-highlight transition-all">Pular Vídeo</button>
-                  <button onClick={() => setVideoUrl("mock-video-url")} className="flex-1 h-14 bg-brand-mango text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-lg shadow-brand-mango/20 active:scale-95 transition-all hover:bg-brand-primary">Gravar Agora</button>
+                  <button onClick={startVideoRecording} disabled={recordingVideo || !!cameraError} className="flex-1 h-14 bg-brand-mango hover:bg-brand-mango/90 disabled:opacity-50 text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-lg shadow-brand-mango/20 active:scale-95 transition-all flex items-center justify-center">Gravar Agora</button>
                 </>
               ) : (
                 <button onClick={() => setStep('thumb')} className="w-full h-14 bg-brand-primary text-white font-black text-base rounded-xl shadow-xl shadow-brand-primary/20 active:scale-95 transition-all hover:bg-brand-secondary">Finalizar Etapa</button>
@@ -364,24 +486,51 @@ export function Verification({ onComplete }: { onComplete: (gender: Gender, phot
         )}
 
         {step === 'thumb' && (
-          <div className="space-y-8 text-center">
-            <div className="max-w-sm mx-auto aspect-[3/4] bg-brand-primary rounded-[48px] overflow-hidden relative shadow-2xl">
+          <div className="space-y-8 text-center animate-in fade-in slide-in-from-bottom-5 duration-500">
+            <div className="max-w-sm mx-auto aspect-[3/4] bg-black rounded-[48px] overflow-hidden relative shadow-2xl border border-brand-primary/10">
+              {stream ? (
+                <video 
+                  ref={videoRef} 
+                  autoPlay 
+                  playsInline 
+                  muted 
+                  className="w-full h-full object-cover scale-x-[-1]"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-brand-primary" />
+              )}
+
+              {/* Backdrop layout overlays */}
               {!recording ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-10 space-y-4">
-                  <div className="w-20 h-20 rounded-full bg-brand-mango/10 flex items-center justify-center mb-4">
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center p-10 text-center space-y-4">
+                  <div className="w-20 h-20 rounded-full bg-brand-mango/20 flex items-center justify-center mb-4 border border-brand-mango/30">
                     <Verified className="w-10 h-10 text-brand-mango" />
                   </div>
                   <h3 className="text-white font-black text-2xl tracking-tight leading-snug">Gesto de Identidade</h3>
-                  <p className="text-white/40 text-sm font-medium">Mantenha o polegar para cima 👍 por 5 segundos diante da câmera.</p>
+                  <p className="text-white/70 text-sm font-medium">Mantenha o polegar para cima 👍 por 5 segundos diante da câmera.</p>
                 </div>
               ) : (
-                <div className="absolute inset-0 border-[12px] border-brand-mango/30">
-                  <div className="absolute top-10 left-1/2 -translate-x-1/2 bg-brand-mango text-white px-8 py-3 rounded-full font-black text-3xl shadow-2xl">
+                <div className="absolute inset-0 bg-black/20">
+                  {/* Glowing Scanning line */}
+                  <div className="absolute left-0 right-0 h-1 bg-brand-mango shadow-[0_0_15px_#ffaf00] animate-[scan_2s_infinite] z-20" />
+                  
+                  {/* Countdown Badge */}
+                  <div className="absolute top-10 left-1/2 -translate-x-1/2 bg-brand-mango text-white px-8 py-3 rounded-full font-black text-3xl shadow-2xl z-20">
                     00:0{countdown}
                   </div>
+                  
+                  {/* Aim target circle */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-48 h-48 rounded-full border-4 border-brand-mango/20 animate-ping" />
+                    <div className="w-56 h-56 rounded-full border-4 border-dashed border-brand-mango/50 animate-spin z-10" />
+                    <div className="w-48 h-48 rounded-full border-4 border-brand-mango/25 absolute scale-105 z-10" />
                   </div>
+                </div>
+              )}
+
+              {cameraError && !recording && (
+                <div className="absolute inset-0 bg-brand-primary p-8 flex flex-col items-center justify-center text-center z-30">
+                  <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest leading-relaxed mb-2">Permissão de Câmera Necessária</p>
+                  <p className="text-xs text-white/60 leading-relaxed max-w-xs">{cameraError}</p>
                 </div>
               )}
             </div>
@@ -389,7 +538,8 @@ export function Verification({ onComplete }: { onComplete: (gender: Gender, phot
             {!recording ? (
               <button 
                 onClick={startRecording}
-                className="w-full h-16 bg-brand-mango text-white rounded-2xl font-black text-base shadow-xl shadow-brand-mango/25 active:scale-95 transition-all hover:bg-brand-primary flex items-center justify-center gap-2"
+                disabled={!!cameraError}
+                className="w-full h-16 bg-brand-mango text-white rounded-2xl font-black text-base shadow-xl shadow-brand-mango/25 active:scale-95 transition-all hover:bg-brand-primary flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
                 Iniciar Escaneamento

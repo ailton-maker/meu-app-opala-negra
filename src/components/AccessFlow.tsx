@@ -12,7 +12,7 @@ import {
   UserPlus
 } from 'lucide-react';
 
-import { signInWithGoogle } from '../services/firebase';
+import { signInWithGoogle, signInEthicallyAnonymously } from '../services/firebase';
 import { StoneFractalLogo } from './StoneFractalLogo';
 
 interface AccessFlowProps {
@@ -27,14 +27,19 @@ export function AccessFlow({ inviteCode, onUpdateInviteCode, onComplete, darkMod
   const [method, setMethod] = useState<'email' | 'phone' | null>(null);
   const [value, setValue] = useState('');
   const [loading, setLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const handleGoogleAuth = async () => {
     setLoading(true);
+    setAuthError(null);
     try {
       await signInWithGoogle();
       // App.tsx handles navigation
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error("Google Auth error:", err);
+      setAuthError(
+        "A autenticação com o Google foi bloqueada pelas políticas de segurança do seu iFrame ou falhou. Por favor, clique em 'Acesso Rápido / Demonstração' logo abaixo para acessar o aplicativo instantaneamente!"
+      );
     } finally {
       setLoading(false);
     }
@@ -49,13 +54,22 @@ export function AccessFlow({ inviteCode, onUpdateInviteCode, onComplete, darkMod
     }
   }, [step]);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step === 'auth') {
       setStep('auth'); 
     } else if (step === 'input') {
       if (value) setStep('ethics');
     } else if (step === 'ethics') {
-      onComplete({ method: method!, value, inviteCode });
+      setLoading(true);
+      try {
+        await signInEthicallyAnonymously();
+        onComplete({ method: method!, value, inviteCode });
+      } catch (err) {
+        console.error("Anonymous authentication error:", err);
+        onComplete({ method: method!, value, inviteCode });
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -159,6 +173,19 @@ export function AccessFlow({ inviteCode, onUpdateInviteCode, onComplete, darkMod
             <p className="text-gray-500 font-medium mb-12">Acesse o protocolo de elite ON.</p>
 
             <div className="space-y-4">
+              {authError && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-5 bg-rose-50/80 backdrop-blur-xs border border-rose-100 rounded-3xl text-[11px] font-black uppercase tracking-wider text-rose-600 leading-relaxed text-left flex items-start gap-3 shadow-md"
+                >
+                  <Lock className="w-5 h-5 text-rose-500 shrink-0 mt-0.5 animate-pulse" />
+                  <div>
+                    {authError}
+                  </div>
+                </motion.div>
+              )}
+
               <motion.button 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -177,6 +204,36 @@ export function AccessFlow({ inviteCode, onUpdateInviteCode, onComplete, darkMod
                   <div className="w-4 h-4 ml-auto border-2 border-white/20 border-t-white rounded-full animate-spin" />
                 ) : (
                   <ArrowRight className="w-4 h-4 ml-auto text-white/20 group-hover:translate-x-1 transition-all" />
+                )}
+              </motion.button>
+
+              <motion.button 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={async () => {
+                  setLoading(true);
+                  try {
+                    await signInEthicallyAnonymously();
+                  } catch (err) {
+                    console.error("Anonymous authentication error:", err);
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}
+                className="w-full group flex items-center gap-4 p-4 bg-brand-primary/5 text-brand-primary border border-brand-primary/10 rounded-2xl hover:bg-brand-primary/10 transition-all text-left disabled:opacity-50"
+              >
+                <div className="w-12 h-12 rounded-xl bg-brand-mango/15 flex items-center justify-center text-brand-mango">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="block font-black text-sm tracking-tight text-brand-primary">Acesso Rápido / Demonstração</span>
+                  <span className="text-[9px] font-black text-brand-primary/40 uppercase tracking-[0.2em]">Sem necessidade de conta Google</span>
+                </div>
+                {loading ? (
+                  <div className="w-4 h-4 ml-auto border-2 border-brand-primary/20 border-t-brand-primary rounded-full animate-spin" />
+                ) : (
+                  <ArrowRight className="w-4 h-4 ml-auto text-brand-primary/20 group-hover:translate-x-1 transition-all" />
                 )}
               </motion.button>
               

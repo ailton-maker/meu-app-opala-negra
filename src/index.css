@@ -137,6 +137,7 @@
   animation: ad-breathing 6s ease-in-out infinite;
   transform-origin: center;
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease !important;
+  border-radius: 1.5rem !important;
 }
 
 .AdSpace:hover {
