@@ -14,7 +14,11 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useState } from 'react';
 import { UserProfile, View } from '../types';
+import { logout } from '../services/firebase';
 import { AdSpace } from './AdSpace';
+import { ParceiroBanner } from './ParceiroBanner';
+// @ts-ignore
+import citrinoLogo from '../assets/images/citrino_logo_1779562873994.png';
 
 interface ReputationProps {
   userProfile: UserProfile | null;
@@ -51,7 +55,7 @@ export function Reputation({ userProfile, onNavigate }: ReputationProps) {
   };
 
   return (
-    <div className="pt-20 pb-32 px-5 max-w-lg mx-auto h-full overflow-y-auto font-sans bg-brand-surface">
+    <div className="pt-[140px] pb-32 px-5 max-w-lg mx-auto h-full overflow-y-auto font-sans bg-brand-surface">
       <AnimatePresence>
         {showInviteModal && (
           <motion.div 
@@ -123,6 +127,28 @@ export function Reputation({ userProfile, onNavigate }: ReputationProps) {
             >
               <Verified className="w-6 h-6 fill-white" />
             </motion.div>
+
+            {/* Botão Sair Discreto ao lado da foto */}
+            <button
+              id="btn-profile-logout"
+              onClick={async () => {
+                if (confirm('Tem certeza que deseja sair?')) {
+                  try {
+                    await logout();
+                  } catch (err) {
+                    console.error("Erro ao sair:", err);
+                  }
+                }
+              }}
+              className="absolute left-[160px] top-1/2 -translate-y-1/2 flex flex-col items-center gap-1 group cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 whitespace-nowrap z-20"
+            >
+              <div className="w-9 h-9 rounded-full bg-slate-50 hover:bg-rose-50 flex items-center justify-center text-slate-400 hover:text-rose-600 border border-slate-200/50 shadow-sm transition-colors duration-300">
+                <LogOut className="w-4 h-4 ml-0.5" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 group-hover:text-rose-600 transition-colors duration-300">
+                Sair
+              </span>
+            </button>
           </div>
           
           <h1 className="text-3xl font-black text-brand-primary mb-1 flex items-center justify-center gap-2 translate-x-2">
@@ -186,6 +212,16 @@ export function Reputation({ userProfile, onNavigate }: ReputationProps) {
           </div>
         </div>
       </section>
+
+      <div className="mb-8">
+        <ParceiroBanner
+          imageSource={citrinoLogo}
+          title="Parceiro Estratégico Citrino"
+          description="Acesse o clube de investimentos e benefícios exclusivos e potencialize suas conexões de alto nível."
+          linkUrl="https://citrino.app"
+          highlighted={true}
+        />
+      </div>
 
       <AdSpace variant="banner" userPlan={userProfile?.plan} userId={userProfile?.id} />
 
@@ -281,24 +317,7 @@ export function Reputation({ userProfile, onNavigate }: ReputationProps) {
         </div>
       </section>
 
-      <div className="space-y-4 pb-20">
-        <button 
-          onClick={() => {
-            if(confirm('Tem certeza que deseja sair?')) {
-              onNavigate('onboarding');
-            }
-          }}
-          className="w-full flex items-center justify-between p-8 bg-brand-primary/5 hover:bg-rose-50 rounded-[40px] group transition-all"
-        >
-          <div className="flex items-center gap-5">
-            <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-rose-500 shadow-sm group-hover:bg-rose-500 group-hover:text-white transition-all">
-              <LogOut className="w-6 h-6" />
-            </div>
-            <span className="text-sm font-black text-brand-primary opacity-60 group-hover:text-rose-600 group-hover:opacity-100 transition-all uppercase tracking-widest">Desconectar</span>
-          </div>
-          <ChevronRight className="w-6 h-6 text-brand-primary/20 group-hover:text-rose-300 transition-all" />
-        </button>
-      </div>
+      <div className="pb-24" />
     </div>
   );
 }

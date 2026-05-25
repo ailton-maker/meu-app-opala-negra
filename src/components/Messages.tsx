@@ -29,6 +29,9 @@ import { UserProfile, Conversation, Message } from '../types';
 import { AdSpace } from './AdSpace';
 import { firebaseDb } from '../services/db';
 import { auth } from '../services/firebase';
+import { ParceiroBanner } from './ParceiroBanner';
+// @ts-ignore
+import citrinoLogo from '../assets/images/citrino_logo_1779562873994.png';
 
 export function ChatView({ conversationId, onBack, userProfile }: { conversationId: string | null, onBack: () => void, userProfile: UserProfile | null }) {
   const [text, setText] = useState('');
@@ -186,6 +189,15 @@ export function ChatView({ conversationId, onBack, userProfile }: { conversation
           </button>
         </div>
       </header>
+
+      <div className="px-4 py-2 bg-brand-surface border-b border-brand-primary/[0.04]">
+        <ParceiroBanner
+          imageSource={citrinoLogo}
+          title="Citrino Club de Benefícios"
+          description="Desbloqueie encontros exclusivos e vantagens em estabelecimentos luxuosos da sua cidade."
+          linkUrl="https://citrino.app"
+        />
+      </div>
 
       <div className="flex-grow bg-brand-surface overflow-y-auto px-5 py-6 space-y-6">
         <div className="bg-brand-mango/5 border border-brand-mango/20 rounded-2xl p-5 flex gap-4 shadow-sm">

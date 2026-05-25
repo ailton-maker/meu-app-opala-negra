@@ -22,6 +22,7 @@ import { QuickMessage } from './QuickMessage';
 import { AdSpace } from './AdSpace';
 import { firebaseDb } from '../services/db';
 import { auth } from '../services/firebase';
+import { UserList } from './UserList';
 
 const ALL_INTERESTS = [
   'Design', 'Tecnologia', 'IA', 'Psicologia', 'Arquitetura', 
@@ -51,7 +52,7 @@ export function Discovery({ userProfile }: { userProfile: UserProfile | null }) 
   const [showQuickMessage, setShowQuickMessage] = useState(false);
   const [explorerCity, setExplorerCity] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [discoveryMode, setDiscoveryMode] = useState<'swipe' | 'list'>('swipe');
+  const [discoveryMode, setDiscoveryMode] = useState<'swipe' | 'list' | 'members'>('swipe');
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
 
   // Filter States
@@ -359,36 +360,56 @@ export function Discovery({ userProfile }: { userProfile: UserProfile | null }) 
         {/* Dynamic Display Mode Switcher (Tab Group) */}
         <div className="flex items-center justify-between gap-3 bg-white/40 border border-brand-primary/5 p-1.5 rounded-3xl backdrop-blur-md">
           <span className="text-[9px] font-black text-brand-primary/40 uppercase tracking-[0.2em] pl-3.5">Exibição de Descobertas</span>
-          <div className="flex bg-brand-primary/5 p-1 rounded-2xl shrink-0">
+          <div className="flex bg-brand-primary/5 p-1 rounded-2xl shrink-0 flex-wrap gap-1">
             <button 
               onClick={() => {
                 setDiscoveryMode('swipe');
                 setSelectedProfileId(null);
               }}
-              className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+              className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
                 discoveryMode === 'swipe' 
-                  ? 'bg-brand-primary text-white shadow-md shadow-brand-primary/10' 
+                  ? 'bg-brand-primary text-white shadow-md shadow-brand-primary/10 font-bold' 
                   : 'text-brand-primary/40 hover:text-brand-primary/60'
               }`}
             >
               Cards
             </button>
             <button 
-              onClick={() => setDiscoveryMode('list')}
-              className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+              onClick={() => {
+                setDiscoveryMode('list');
+                setSelectedProfileId(null);
+              }}
+              className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
                 discoveryMode === 'list' 
-                  ? 'bg-brand-primary text-white shadow-md shadow-brand-primary/10' 
+                  ? 'bg-brand-primary text-white shadow-md shadow-brand-primary/10 font-bold' 
                   : 'text-brand-primary/40 hover:text-brand-primary/60'
               }`}
             >
               Lista Virtual
+            </button>
+            <button 
+              onClick={() => {
+                setDiscoveryMode('members');
+                setSelectedProfileId(null);
+              }}
+              className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                discoveryMode === 'members' 
+                  ? 'bg-brand-primary text-white shadow-md shadow-brand-primary/10 font-bold' 
+                  : 'text-brand-primary/40 hover:text-brand-primary/60'
+              }`}
+            >
+              Membros Ativos
             </button>
           </div>
         </div>
       </div>
 
       <div className="relative flex-grow flex flex-col justify-center min-h-[560px]">
-        {discoveryMode === 'list' ? (
+        {discoveryMode === 'members' ? (
+          <div className="w-full h-[560px] rounded-[36.5px] overflow-y-auto bg-white/30 backdrop-blur-md border border-brand-primary/5 shadow-2xl p-5 scrollbar-hide">
+            <UserList />
+          </div>
+        ) : discoveryMode === 'list' ? (
           <div className="w-full h-[560px] rounded-[36.5px] overflow-hidden bg-white/30 backdrop-blur-md border border-brand-primary/5 shadow-2xl p-0.5">
             <List
               height={550}

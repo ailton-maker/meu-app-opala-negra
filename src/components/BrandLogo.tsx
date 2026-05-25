@@ -9,18 +9,9 @@ export function BrandLogo({ className = "", showText = true, darkMode = false }:
         animate={{ scale: 1, opacity: 1 }}
         className="relative"
       >
-        {darkMode ? (
-          /* Transparent background shape for Dark Mode as requested */
-          <div className="relative w-24 h-24 flex items-center justify-center group overflow-visible">
-            <div className="absolute inset-0 bg-[#D63031] blur-3xl opacity-25 rounded-full animate-pulse pointer-events-none" />
-            <StoneFractalLogo className="w-20 h-20 relative z-10 transition-transform duration-300 group-hover:scale-105" darkMode={true} />
-          </div>
-        ) : (
-          /* Transparent background shape for Light Mode as requested: "fundo transparente" */
-          <div className="relative w-24 h-24 flex items-center justify-center group overflow-visible">
-            <StoneFractalLogo className="w-20 h-20 relative z-10 transition-transform duration-300 group-hover:scale-105" darkMode={false} />
-          </div>
-        )}
+        <div className="relative w-32 h-32 flex items-center justify-center group overflow-visible">
+          <StoneFractalLogo className="w-28 h-28 relative z-10 transition-transform duration-300 group-hover:scale-105" darkMode={darkMode} />
+        </div>
       </motion.div>
  
       {showText && (
@@ -30,16 +21,19 @@ export function BrandLogo({ className = "", showText = true, darkMode = false }:
           transition={{ delay: 0.2 }}
           className="text-center"
         >
-          <h1 className="text-4xl font-black tracking-[-0.05em] uppercase transition-all duration-300">
+          <h1 className="text-[34px] font-black tracking-[0.1em] uppercase transition-all duration-300">
             {darkMode ? (
-              <span className="text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.2)] relative inline-block">
-                Opala Negra
-                <span className="absolute left-0 bottom-0.5 w-full h-[2.5px] bg-[#D63031] rounded-full opacity-85" />
-              </span>
+              <>
+                <span className="text-white">Opala </span>
+                <span className="text-[#D63031] font-extrabold relative inline-block">
+                  Negra
+                  <span className="absolute left-0 bottom-0.5 w-full h-[2.5px] bg-[#D63031] rounded-full opacity-85" />
+                </span>
+              </>
             ) : (
               <>
                 <span className="text-[#4B0082]">Opala </span>
-                <span className="text-[#8A2BE2] font-extrabold relative inline-block">
+                <span className="text-[#8A2BE2] font-black relative inline-block">
                   Negra
                   <span className="absolute left-0 bottom-0.5 w-full h-[3px] bg-[#DA70D6] rounded-full opacity-65" />
                 </span>
@@ -47,13 +41,13 @@ export function BrandLogo({ className = "", showText = true, darkMode = false }:
             )}
           </h1>
           <div className="flex items-center justify-center gap-2 mt-2">
-            <div className={`h-[1px] w-4 ${darkMode ? 'bg-brand-secondary/30' : 'bg-[#4B0082]/20'}`} />
+            <div className={`h-[1px] w-4 ${darkMode ? 'bg-brand-secondary/30' : 'bg-brand-primary/20'}`} />
             <p className={`text-[10px] font-black uppercase tracking-[0.4em] ${
-              darkMode ? 'text-brand-primary/60' : 'text-[#8A2BE2]/55'
+              darkMode ? 'text-brand-primary/60' : 'text-[#f59e0b]'
             }`}>
               Exclusividade Ética
             </p>
-            <div className={`h-[1px] w-4 ${darkMode ? 'bg-brand-secondary/30' : 'bg-[#4B0082]/20'}`} />
+            <div className={`h-[1px] w-4 ${darkMode ? 'bg-brand-secondary/30' : 'bg-brand-primary/20'}`} />
           </div>
         </motion.div>
       )}

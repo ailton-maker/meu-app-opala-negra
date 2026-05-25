@@ -1,5 +1,5 @@
-import React, { memo, useState, useRef } from 'react';
-import { ExternalLink, Tag, Sparkles, Crown, Share2, Check } from 'lucide-react';
+import React, { memo, useState, useRef, useEffect } from 'react';
+import { ExternalLink, Tag, Sparkles, Crown, Share2, Check, X, EyeOff, Settings as SettingsIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PlanTier } from '../types';
 import { firebaseDb } from '../services/db';
@@ -17,6 +17,35 @@ export const AdSpace = memo(({ variant = 'banner', userPlan, userId, adId = 'pre
   const containerRef = useRef<HTMLDivElement>(null);
   const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number; size: number }>>([]);
   const [shared, setShared] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [hideForever, setHideForever] = useState(() => {
+    try {
+      return localStorage.getItem('hide_ads_forever') === 'true' || localStorage.getItem(`hide_ad_${adId}`) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    if (userId) {
+      const checkAdPrefs = async () => {
+        try {
+          const profile = await firebaseDb.getProfile(userId);
+          if (profile && (profile as any).hideAdsForever) {
+            setHideForever(true);
+            try {
+              localStorage.setItem('hide_ads_forever', 'true');
+            } catch {}
+          }
+        } catch (err) {
+          console.error("Error reading user preferences from Firestore:", err);
+        }
+      };
+      checkAdPrefs();
+    }
+  }, [userId, adId]);
 
   const handleShare = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -43,7 +72,42 @@ export const AdSpace = memo(({ variant = 'banner', userPlan, userId, adId = 'pre
     }
   };
 
-  if (userPlan === 'gold') return null;
+  if (userPlan === 'gold' || hideForever) return null;
+
+  if (isDismissed) {
+    return (
+      <div className="AdSpace w-full py-3.5 px-5 mb-6 rounded-2xl border border-brand-primary/[0.08] bg-brand-primary/[0.02] flex items-center justify-between gap-3 animate-in fade-in duration-300">
+        <div className="flex items-center gap-2 min-w-0">
+          <EyeOff className="w-4 h-4 text-brand-primary/30 shrink-0" />
+          <span className="text-[10px] font-black uppercase tracking-wider text-brand-primary/40 truncate">Anúncio Plano Gold ocultado</span>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <button
+            onClick={() => setIsDismissed(false)}
+            className="text-[10px] font-black uppercase tracking-widest text-[#f59e0b] hover:text-brand-primary transition-all cursor-pointer hover:underline"
+          >
+            Desfazer
+          </button>
+          <span className="text-brand-primary/20">|</span>
+          <button
+            onClick={async () => {
+              setHideForever(true);
+              try {
+                localStorage.setItem('hide_ads_forever', 'true');
+                localStorage.setItem(`hide_ad_${adId}`, 'true');
+              } catch {}
+              if (userId) {
+                await firebaseDb.updateAdPreference(userId, true);
+              }
+            }}
+            className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-600 transition-all cursor-pointer hover:underline"
+          >
+            Ocultar para sempre
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleClick = (e: React.MouseEvent<HTMLElement>) => {
     e.stopPropagation();
@@ -72,6 +136,7 @@ export const AdSpace = memo(({ variant = 'banner', userPlan, userId, adId = 'pre
     }
     // Simulation of opening the ad link
     console.log(`Ad ${adId} clicked in variant ${variant} (hover duration before click: ${hoverDurationMs}ms)`);
+    setIsExpanded(prev => !prev);
   };
 
   const handleMouseEnter = () => {
@@ -195,30 +260,106 @@ export const AdSpace = memo(({ variant = 'banner', userPlan, userId, adId = 'pre
             ease: "easeInOut"
           }}
         />
-      <div className="absolute top-4 right-5 z-20 flex items-center gap-2">
-        <button
-          onClick={handleShare}
-          className={`p-1.5 rounded-full transition-all flex items-center justify-center hover:scale-110 active:scale-95 cursor-pointer ${
-            variant === 'card' 
-              ? 'bg-white/20 text-white hover:bg-white/30 border border-white/10' 
-              : 'bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 border border-brand-primary/15'
-          }`}
-          title={shared ? "Link copiado!" : "Compartilhar Plano Gold"}
-        >
-          {shared ? (
-            <Check className="w-3 h-3 text-emerald-400" strokeWidth={3} />
-          ) : (
-            <Share2 className="w-3 h-3" />
-          )}
-        </button>
 
-        <div className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black font-extrabold text-[8px] tracking-widest uppercase px-2.5 py-1 rounded-full shadow-lg shadow-amber-500/20 border border-amber-300/40 select-none">
-          <Crown className="w-2.5 h-2.5 fill-black" strokeWidth={2.5} />
-          <span>Plano Gold</span>
+        <AnimatePresence>
+          {showSettingsMenu && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className={`absolute inset-0 z-30 flex flex-col items-center justify-center p-4 text-center backdrop-blur-md rounded-[inherit] ${
+                variant === 'card' ? 'bg-zinc-950/95 text-white' : 'bg-white/95 text-brand-primary border border-brand-primary/5'
+              }`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <EyeOff className="w-8 h-8 text-brand-primary/50 mb-2 animate-bounce" />
+              <h4 className="text-xs font-black uppercase tracking-wider mb-1">Preferências de Anúncio</h4>
+              <p className="text-[10px] text-brand-primary/65 max-w-[200px] mb-4 font-semibold leading-relaxed">
+                Deseja ocultar permanentemente este e todos os outros anúncios do plano?
+              </p>
+              <div className="flex gap-2 flex-wrap justify-center">
+                <button
+                  onClick={async () => {
+                    setHideForever(true);
+                    try {
+                      localStorage.setItem('hide_ads_forever', 'true');
+                      localStorage.setItem(`hide_ad_${adId}`, 'true');
+                    } catch {}
+                    if (userId) {
+                      await firebaseDb.updateAdPreference(userId, true);
+                    }
+                  }}
+                  className="bg-red-500 hover:bg-red-600 text-white text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                >
+                  Ocultar para sempre
+                </button>
+                <button
+                  onClick={() => setShowSettingsMenu(false)}
+                  className={`text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer ${
+                    variant === 'card' ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20'
+                  }`}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className="absolute top-4 right-5 z-20 flex items-center gap-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowSettingsMenu(true);
+            }}
+            className={`p-1.5 rounded-full transition-all flex items-center justify-center hover:scale-110 active:scale-95 cursor-pointer ${
+              variant === 'card' 
+                ? 'bg-white/20 text-white hover:bg-brand-primary hover:text-white border border-white/10' 
+                : 'bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 border border-brand-primary/15'
+            }`}
+            title="Preferências do anúncio"
+          >
+            <SettingsIcon className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsDismissed(true);
+            }}
+            className={`p-1.5 rounded-full transition-all flex items-center justify-center hover:scale-110 active:scale-95 cursor-pointer ${
+              variant === 'card' 
+                ? 'bg-white/20 text-white hover:bg-red-500 hover:text-white border border-white/10' 
+                : 'bg-brand-primary/10 text-brand-primary hover:bg-red-50 hover:text-red-600 border border-brand-primary/15'
+            }`}
+            title="Ocultar anúncio"
+          >
+            <X className="w-3 h-3" />
+          </button>
+
+          <button
+            onClick={handleShare}
+            className={`p-1.5 rounded-full transition-all flex items-center justify-center hover:scale-110 active:scale-95 cursor-pointer ${
+              variant === 'card' 
+                ? 'bg-white/20 text-white hover:bg-white/30 border border-white/10' 
+                : 'bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 border border-brand-primary/15'
+            }`}
+            title={shared ? "Link copiado!" : "Compartilhar Plano Gold"}
+          >
+            {shared ? (
+              <Check className="w-3 h-3 text-emerald-400" strokeWidth={3} />
+            ) : (
+              <Share2 className="w-3 h-3" />
+            )}
+          </button>
+
+          <div className="ad-badge-gold flex items-center gap-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black font-extrabold text-[8px] tracking-widest uppercase px-2.5 py-1 rounded-full shadow-lg shadow-amber-500/20 border border-amber-300/40 select-none">
+            <Crown className="ad-badge-icon w-2.5 h-2.5 fill-black" strokeWidth={2.5} />
+            <span>Plano Gold</span>
+          </div>
         </div>
-      </div>
  
-      <div className={`flex ${variant === 'card' ? 'flex-col items-center gap-6' : 'flex-row items-center gap-4'}`}>
+        <div className={`flex ${variant === 'card' ? 'flex-col items-center gap-6' : 'flex-row items-center gap-4'}`}>
         <div className={`rounded-2xl flex items-center justify-center shrink-0 shadow-lg ${
           variant === 'card' 
           ? 'w-20 h-20 bg-white/20 p-5 shadow-white/10' 
@@ -242,10 +383,71 @@ export const AdSpace = memo(({ variant = 'banner', userPlan, userId, adId = 'pre
               : 'bg-brand-mango/10 hover:bg-brand-mango/20 text-brand-mango'
           }`}
         >
-          <span className="text-[10px] font-black uppercase tracking-widest">Descobrir</span>
-          <ExternalLink className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          <span className="text-[10px] font-black uppercase tracking-widest">{isExpanded ? 'Recolher' : 'Descobrir'}</span>
+          <ExternalLink className={`w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
         </button>
       </div>
+
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className={`border-t mt-4 pt-4 overflow-hidden ${
+              variant === 'card' ? 'border-white/15 text-white/95' : 'border-brand-primary/[0.06] text-brand-primary'
+            }`}
+          >
+            <div className="flex flex-col gap-3 font-semibold text-[10px] leading-relaxed text-left">
+              <span className={`text-[9px] font-black uppercase tracking-wider ${
+                variant === 'card' ? 'text-amber-300' : 'text-brand-mango'
+              }`}>
+                Benefícios Exclusivos do Assinante Gold:
+              </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[10px]">
+                <div className="flex items-start gap-2">
+                  <span className={`flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] font-black shrink-0 ${
+                    variant === 'card' ? 'bg-white/15 text-white' : 'bg-brand-mango/10 text-brand-mango'
+                  }`}>
+                    ✓
+                  </span>
+                  <span><strong>Conexões Ilimitadas:</strong> Inicie bate-papos e troque fotos ilimitadas todos os dias.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className={`flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] font-black shrink-0 ${
+                    variant === 'card' ? 'bg-white/15 text-white' : 'bg-brand-mango/10 text-brand-mango'
+                  }`}>
+                    ✓
+                  </span>
+                  <span><strong>Badge Gold:</strong> Destaque reluzente na aba de buscas e no perfil geral.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className={`flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] font-black shrink-0 ${
+                    variant === 'card' ? 'bg-white/15 text-white' : 'bg-brand-mango/10 text-brand-mango'
+                  }`}>
+                    ✓
+                  </span>
+                  <span><strong>Navegação Oculta:</strong> Ative o Modo Invisível e visite perfis de modo anônimo.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className={`flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] font-black shrink-0 ${
+                    variant === 'card' ? 'bg-white/15 text-white' : 'bg-brand-mango/10 text-brand-mango'
+                  }`}>
+                    ✓
+                  </span>
+                  <span><strong>Encontros Exclusivos:</strong> Prioridade na lista de eventos secretos em sua cidade.</span>
+                </div>
+              </div>
+              <div className={`mt-2 text-[9px] italic text-center w-full ${
+                variant === 'card' ? 'text-white/60' : 'text-brand-primary/45'
+              }`}>
+                * Toque novamente sob o anúncio para minimizar.
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {variant === 'card' && (
         <>

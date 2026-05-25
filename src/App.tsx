@@ -27,6 +27,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { auth } from './services/firebase';
 import { firebaseDb } from './services/db';
 import { onAuthStateChanged } from 'firebase/auth';
+import { UserProvider } from './context/UserContext';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('access');
@@ -207,102 +208,104 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-brand-surface flex flex-col font-sans select-none overflow-x-hidden">
-      <AnimatePresence mode="wait">
-        {currentView === 'access' ? (
-          <AccessFlow 
-            darkMode={darkMode}
-            inviteCode={tempInviteCode}
-            onUpdateInviteCode={setTempInviteCode}
-            onComplete={(authInfo) => {
-              setTempAuth({ method: authInfo.method, value: authInfo.value });
-              if (authInfo.inviteCode) setTempInviteCode(authInfo.inviteCode);
-              navigateTo('verification');
-            }} 
-          />
-        ) : currentView === 'verification' ? (
-          <Verification onComplete={async (gender, photos, location, video?) => {
-            const userId = auth.currentUser?.uid || `user_${Date.now()}`;
-            const newProfile: UserProfile = {
-              id: userId,
-              name: auth.currentUser?.displayName || (gender === 'female' ? "Mariana Silva" : "Gabriel Torres"),
-              age: 24,
-              bio: "Buscando conexões autênticas e conversas éticas.",
-              location: location,
-              role: gender === 'female' ? "Arquiteta" : "Design Lead",
-              imageUrl: photos[0],
-              photos,
-              verificationVideo: video,
-              gender,
-              plan: 'free',
-              maxConversations: 5,
-              currentConversations: 0,
-              verificationLevel: 1,
-              daysActive: 0,
-              reputation: 100,
-              joinedAt: new Date().toISOString()
-            };
-            
-            try {
-              await firebaseDb.saveProfile(newProfile);
-              console.log("Profile saved successfully");
+    <UserProvider currentUserProfile={userProfile}>
+      <div className="min-h-screen bg-brand-surface flex flex-col font-sans select-none overflow-x-hidden">
+        <AnimatePresence mode="wait">
+          {currentView === 'access' ? (
+            <AccessFlow 
+              darkMode={darkMode}
+              inviteCode={tempInviteCode}
+              onUpdateInviteCode={setTempInviteCode}
+              onComplete={(authInfo) => {
+                setTempAuth({ method: authInfo.method, value: authInfo.value });
+                if (authInfo.inviteCode) setTempInviteCode(authInfo.inviteCode);
+                navigateTo('verification');
+              }} 
+            />
+          ) : currentView === 'verification' ? (
+            <Verification onComplete={async (gender, photos, location, video?) => {
+              const userId = auth.currentUser?.uid || `user_${Date.now()}`;
+              const newProfile: UserProfile = {
+                id: userId,
+                name: auth.currentUser?.displayName || (gender === 'female' ? "Mariana Silva" : "Gabriel Torres"),
+                age: 24,
+                bio: "Buscando conexões autênticas e conversas éticas.",
+                location: location,
+                role: gender === 'female' ? "Arquiteta" : "Design Lead",
+                imageUrl: photos[0],
+                photos,
+                verificationVideo: video,
+                gender,
+                plan: 'free',
+                maxConversations: 5,
+                currentConversations: 0,
+                verificationLevel: 1,
+                daysActive: 0,
+                reputation: 100,
+                joinedAt: new Date().toISOString()
+              };
               
-              if (tempInviteCode) {
-                const result = await firebaseDb.redeemInvitationCode(userId, tempInviteCode);
-                if (result.success) {
-                  // Re-fetch profile to get premium updates
-                  const updatedProfile = await firebaseDb.getProfile(userId);
-                  if (updatedProfile) setUserProfile(updatedProfile);
-                  else setUserProfile(newProfile);
+              try {
+                await firebaseDb.saveProfile(newProfile);
+                console.log("Profile saved successfully");
+                
+                if (tempInviteCode) {
+                  const result = await firebaseDb.redeemInvitationCode(userId, tempInviteCode);
+                  if (result.success) {
+                    // Re-fetch profile to get premium updates
+                    const updatedProfile = await firebaseDb.getProfile(userId);
+                    if (updatedProfile) setUserProfile(updatedProfile);
+                    else setUserProfile(newProfile);
+                  } else {
+                    setUserProfile(newProfile);
+                  }
                 } else {
                   setUserProfile(newProfile);
                 }
-              } else {
+                
+                navigateTo('discovery');
+              } catch (err) {
+                console.error("Failed during profile setup:", err);
                 setUserProfile(newProfile);
+                navigateTo('discovery');
               }
-              
-              navigateTo('discovery');
-            } catch (err) {
-              console.error("Failed during profile setup:", err);
-              setUserProfile(newProfile);
-              navigateTo('discovery');
-            }
-          }} />
-        ) : (
-          <div key="main" className="flex flex-col flex-grow">
-            {!isFullScreenView && (
-              <TopAppBar 
-                view={currentView} 
-                onNavigate={navigateTo} 
-                title={getTitle()}
-                showBack={currentView === 'help'}
-                onBack={() => navigateTo('profile')}
-                userProfile={userProfile}
-                darkMode={darkMode}
-                onToggleDarkMode={() => setDarkMode(!darkMode)}
-              />
-            )}
+            }} />
+          ) : (
+            <div key="main" className="flex flex-col flex-grow">
+              {!isFullScreenView && (
+                <TopAppBar 
+                  view={currentView} 
+                  onNavigate={navigateTo} 
+                  title={getTitle()}
+                  showBack={currentView === 'help'}
+                  onBack={() => navigateTo('profile')}
+                  userProfile={userProfile}
+                  darkMode={darkMode}
+                  onToggleDarkMode={() => setDarkMode(!darkMode)}
+                />
+              )}
 
-            <main className="flex-grow">
-              {renderView()}
-            </main>
+              <main className="flex-grow">
+                {renderView()}
+              </main>
 
-            {!isFullScreenView && (
-              <BottomNav activeView={currentView} onNavigate={navigateTo} userProfile={userProfile} />
-            )}
+              {!isFullScreenView && (
+                <BottomNav activeView={currentView} onNavigate={navigateTo} userProfile={userProfile} />
+              )}
 
-            {/* Floating Action for Demo */}
-            <div className="fixed top-4 left-4 z-[200] flex flex-wrap gap-2 opacity-10 hover:opacity-100 transition-opacity pointer-events-none hover:pointer-events-auto">
-              <button onClick={() => navigateTo('premium')} className="bg-brand-primary text-white text-[8px] px-2 py-1 rounded">PRO</button>
-              <button onClick={() => navigateTo('report')} className="bg-rose-600 text-white text-[8px] px-2 py-1 rounded">DENUNCIAR</button>
-              <button onClick={() => navigateTo('transactions')} className="bg-brand-primary text-white text-[8px] px-2 py-1 rounded">TX</button>
-              <button onClick={() => navigateTo('help')} className="bg-brand-primary text-white text-[8px] px-2 py-1 rounded">AJUDA</button>
-              <button onClick={() => navigateTo('reputation')} className="bg-brand-primary text-white text-[8px] px-2 py-1 rounded">ADMIN</button>
+              {/* Floating Action for Demo */}
+              <div className="fixed top-4 left-4 z-[200] flex flex-wrap gap-2 opacity-10 hover:opacity-100 transition-opacity pointer-events-none hover:pointer-events-auto">
+                <button onClick={() => navigateTo('premium')} className="bg-brand-primary text-white text-[8px] px-2 py-1 rounded">PRO</button>
+                <button onClick={() => navigateTo('report')} className="bg-rose-600 text-white text-[8px] px-2 py-1 rounded">DENUNCIAR</button>
+                <button onClick={() => navigateTo('transactions')} className="bg-brand-primary text-white text-[8px] px-2 py-1 rounded">TX</button>
+                <button onClick={() => navigateTo('help')} className="bg-brand-primary text-white text-[8px] px-2 py-1 rounded">AJUDA</button>
+                <button onClick={() => navigateTo('reputation')} className="bg-brand-primary text-white text-[8px] px-2 py-1 rounded">ADMIN</button>
+              </div>
             </div>
-          </div>
-        )}
-      </AnimatePresence>
-    </div>
+          )}
+        </AnimatePresence>
+      </div>
+    </UserProvider>
   );
 }
 

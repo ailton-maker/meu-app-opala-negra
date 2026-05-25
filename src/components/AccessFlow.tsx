@@ -91,13 +91,14 @@ export function AccessFlow({ inviteCode, onUpdateInviteCode, onComplete, darkMod
           >
             <div className="absolute top-10 right-10 z-20 flex items-center gap-2">
               {darkMode ? (
-                <div className="w-6 h-6 rounded-lg bg-white/10 backdrop-blur-md flex items-center justify-center">
-                  <StoneFractalLogo className="w-3.5 h-3.5" darkMode={true} />
+                /* Transparent background as requested: "fundo transparente" */
+                <div className="w-10 h-10 flex items-center justify-center bg-transparent">
+                  <StoneFractalLogo className="w-9 h-9" darkMode={true} />
                 </div>
               ) : (
                 /* Transparent background as requested: "fundo transparente" */
-                <div className="w-6 h-6 flex items-center justify-center bg-transparent">
-                  <StoneFractalLogo className="w-6 h-6" darkMode={false} />
+                <div className="w-10 h-10 flex items-center justify-center bg-transparent">
+                  <StoneFractalLogo className="w-10 h-10" darkMode={false} />
                 </div>
               )}
               <p className={`text-[10px] font-black uppercase tracking-[0.4em] transition-colors ${
@@ -147,13 +148,14 @@ export function AccessFlow({ inviteCode, onUpdateInviteCode, onComplete, darkMod
           >
             <div className="absolute top-10 right-10 flex items-center gap-2">
               {darkMode ? (
-                <div className="w-5 h-5 rounded-md bg-brand-primary flex items-center justify-center">
-                  <StoneFractalLogo className="w-3 h-3" darkMode={true} />
+                /* Transparent background as requested: "fundo transparente" */
+                <div className="w-8 h-8 flex items-center justify-center bg-transparent">
+                  <StoneFractalLogo className="w-7 h-7" darkMode={true} />
                 </div>
               ) : (
                 /* Transparent background as requested: "fundo transparente" */
-                <div className="w-5 h-5 flex items-center justify-center bg-transparent">
-                  <StoneFractalLogo className="w-4.5 h-4.5" darkMode={false} />
+                <div className="w-8 h-8 flex items-center justify-center bg-transparent">
+                  <StoneFractalLogo className="w-8 h-8" darkMode={false} />
                 </div>
               )}
               <p className={`text-[10px] font-black uppercase tracking-[0.4em] transition-colors ${

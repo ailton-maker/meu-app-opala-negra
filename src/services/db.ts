@@ -598,6 +598,16 @@ class FirebaseDB {
       handleFirestoreError(error, OperationType.WRITE, `users/${userId}`);
     }
   }
+
+  async updateAdPreference(userId: string, hideForever: boolean) {
+    try {
+      await updateDoc(doc(db, 'users', userId), {
+        hideAdsForever: hideForever
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, `users/${userId}`);
+    }
+  }
 }
 
 export const firebaseDb = new FirebaseDB();

@@ -162,4 +162,25 @@
   will-change: transform, opacity;
 }
 
+.AdSpace .ad-badge-gold {
+  /* Enabled 'Gold Plan' badge by removing display:none */
+}
+
+.AdSpace .ad-badge-icon {
+  animation: ad-crown-pulse 2.2s infinite ease-in-out;
+  transform-origin: center;
+  display: inline-block;
+}
+
+@keyframes ad-crown-pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 1px rgba(251, 191, 36, 0.2));
+  }
+  50% {
+    transform: scale(1.25);
+    filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.8));
+  }
+}
+
 
